@@ -1,0 +1,16 @@
+.text input {
+    font-size: 20px;
+    color: #999;
+    font-weight: bold;
+}
+
+.text input:disabled {
+    background: none;
+}
+
+.dropdown {
+    padding: 0;
+    border: none;
+    border-radius: 10px !important;
+    background-color: #292929;
+}

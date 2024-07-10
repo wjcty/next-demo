@@ -1,0 +1,80 @@
+.tab {
+    position: relative;
+    // border: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4));
+    // background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-6));
+    background: #1f1f1f;
+    color: white;
+    font-weight: bold;
+    padding: 12px 0;
+    &:first-of-type {
+        border-radius: 6px 0 0 6px;
+
+        @mixin rtl {
+            border-radius: 0 6px 6px 0;
+        }
+    }
+
+    &:last-of-type {
+        border-radius: 0 6px 6px 0;
+
+        @mixin rtl {
+            border-radius: 6px 0 0 6px;
+        }
+    }
+
+    & + & {
+        border-left-width: 0;
+
+        @mixin rtl {
+            border-right-width: 0;
+            border-left-width: 1px;
+        }
+    }
+
+    @mixin hover {
+        background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-5));
+    }
+
+    &[data-active] {
+        z-index: 1;
+        background-color: white;
+        // background-color: var(--mantine-color-blue-filled);
+        // border-color: var(--mantine-color-blue-filled);
+        // color: var(--mantine-color-white);
+        color: black;
+        @mixin hover {
+            background-color: var(--mantine-color-blue-filled-hover);
+        }
+    }
+}
+
+.custom_text {
+    background: linear-gradient(90deg, rgba(253, 31, 67, 1) 0%, rgba(75, 224, 255, 1) 100%);
+    background-clip: text;
+    -webkit-background-clip: text; /*将设置的背景颜色限制在文字中*/
+    -webkit-text-fill-color: transparent; /*给文字设置成透明*/
+    font-weight: 500;
+}
+
+.text {
+    input {
+        color: #999;
+        font-size: 20px;
+    }
+    width: 400px;
+}
+
+.dropdown {
+    padding: 0;
+    border: none;
+    border-radius: 10px !important;
+    background-color: #292929;
+}
+
+.line_g_text {
+    font-weight: 600;
+    background: linear-gradient(75deg, rgba(253, 55, 31, 1) 0%, rgba(253, 56, 32, 1) 0%, rgba(255, 132, 75, 1) 100%);
+    background-clip: text;
+    -webkit-background-clip: text; /*将设置的背景颜色限制在文字中*/
+    -webkit-text-fill-color: transparent; /*给文字设置成透明*/
+}

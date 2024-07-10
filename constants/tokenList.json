@@ -1,0 +1,255 @@
+[
+    {
+        "address": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+        "ticker": "WBNB",
+        "ids": "wbnb",
+        "img": "https://coin-images.coingecko.com/coins/images/12591/large/binance-coin-logo.png?1696512401",
+        "name": "Wrapped BNB",
+        "derivedBNB": "1",
+        "derivedUSD": "572.3457196366796945665047941868706",
+        "decimals": "18",
+        "totalLiquidity": "840290.726378129831005093"
+    },
+    {
+        "address": "0x55d398326f99059fF775485246999027B3197955",
+        "ids": "tether",
+        "img": "https://coin-images.coingecko.com/coins/images/325/large/Tether.png?1696501661",
+        "ticker": "USDT",
+        "name": "Tether USD",
+        "derivedBNB": "0.001744607222827835188895639119106893",
+        "derivedUSD": "0.9985184764327465381705196660432797",
+        "decimals": "18",
+        "totalLiquidity": "118056123.814705397168179838"
+    },
+    {
+        "address": "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82",
+        "img": "https://coin-images.coingecko.com/coins/images/12632/large/pancakeswap-cake-logo_%281%29.png?1696512440",
+        "ticker": "CAKE",
+        "name": "PancakeSwap Token",
+        "derivedBNB": "0.003769114215590628363904198432247203",
+        "derivedUSD": "2.156882084780599539982282181149945",
+        "decimals": "18",
+        "totalLiquidity": "13600158.092125808451849138"
+    },
+    {
+        "address": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+        "ticker": "BTCB",
+        "ids": "binance-bitcoin",
+        "img": "https://coin-images.coingecko.com/coins/images/14108/large/Binance-bitcoin.png?1696513829",
+        "name": "BTCB Token",
+        "derivedBNB": "106.6329481747981922916594386907922",
+        "derivedUSD": "61020.88777628610133545119695055422",
+        "decimals": "18",
+        "totalLiquidity": "87.808975747738782705"
+    },
+    {
+        "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+        "ids": "usd-coin",
+        "img": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+        "ticker": "USDC",
+        "name": "USD Coin",
+        "derivedBNB": "0.001750566069682292054632361877421362",
+        "derivedUSD": "1.001764440648783014074006840686405",
+        "decimals": "18",
+        "totalLiquidity": "8519239.255970916542544727"
+    },
+    {
+        "address": "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
+        "ticker": "ETH",
+        "ids": "ethereum",
+        "img": "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628",
+        "name": "Ethereum Token",
+        "derivedBNB": "5.924744280713156210102559816303818",
+        "derivedUSD": "3390.85951928376941070931868863463",
+        "decimals": "18",
+        "totalLiquidity": "3328.282923074690315554"
+    },
+    {
+        "address": "0x12BB890508c125661E03b09EC06E404bc9289040",
+        "ticker": "RACA",
+        "ids": "radio-caca",
+        "name": "Radio Caca V2",
+        "img": "https://coin-images.coingecko.com/coins/images/17841/large/ez44_BSs_400x400.jpg?1696517365",
+        "derivedBNB": "0.000000313974502192466655770867034519124",
+        "derivedUSD": "0.0001796724482520672983711647936030703",
+        "decimals": "18",
+        "totalLiquidity": "855095182.695699502956841045"
+    },
+    {
+        "address": "0x3203c9E46cA618C8C1cE5dC67e7e9D75f5da2377",
+        "ticker": "MBOX",
+        "ids": "mobox",
+        "img": "https://coin-images.coingecko.com/coins/images/14751/large/mobox.PNG?1696514420",
+        "name": "Mobox",
+        "derivedBNB": "0.0004085645766701901428206472719701389",
+        "derivedUSD": "0.2338017808669172561048926310369325",
+        "decimals": "18",
+        "totalLiquidity": "23233948.498924021268597083"
+    },
+    {
+        "address": "0xC9849E6fdB743d08fAeE3E34dd2D1bc69EA11a51",
+        "ids": "pancake-bunny",
+        "ticker": "BUNNY",
+        "img": "https://coin-images.coingecko.com/coins/images/13148/large/wallet-logo-bunny.png?1696512933",
+        "name": "Bunny Token",
+        "derivedBNB": "0.0001872668985882347863421993314699864",
+        "derivedUSD": "0.107156633472218969223939747783789",
+        "decimals": "18",
+        "totalLiquidity": "944633.692690246626248078"
+    },
+    {
+        "address": "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F",
+        "ids": "alpaca-finance",
+        "img": "https://coin-images.coingecko.com/coins/images/14165/large/Logo200.png?1696513884",
+        "ticker": "ALPACA",
+        "name": "AlpacaToken",
+
+        "derivedBNB": "0.0002180876174625433834037882712207816",
+        "derivedUSD": "0.1248010137426237267906926294332388",
+        "decimals": "18",
+        "totalLiquidity": "504557.001531862417041919"
+    },
+    {
+        "address": "0xD44FD09d74cd13838F137B590497595d6b3FEeA4",
+        "ticker": "ETERNAL",
+        "ids": "cryptomines-eternal",
+        "img": "https://coin-images.coingecko.com/coins/images/18344/large/rn78txF.png?1696517834",
+        "name": "CryptoMines Eternal",
+        "derivedBNB": "0.0003421839727359011549500788451196966",
+        "derivedUSD": "0.195979173121467133329696447961341",
+        "decimals": "18",
+        "totalLiquidity": "2495862.52714946340830385"
+    },
+    {
+        "address": "0xD40bEDb44C081D2935eebA6eF5a3c8A31A1bBE13",
+        "ticker": "HERO",
+        "ids": "metahero",
+        "img": "https://coin-images.coingecko.com/coins/images/16911/large/AVATAR2.png?1696516482",
+        "name": "Metahero",
+        "derivedBNB": "0.000004183305087945085668743503288946868",
+        "derivedUSD": "0.002394244206414349923691442236180629",
+        "decimals": "18",
+        "totalLiquidity": "2895661446.945276375600527766"
+    },
+    {
+        "address": "0x8C851d1a123Ff703BD1f9dabe631b69902Df5f97",
+        "ticker": "BNX",
+        "ids": "binaryx",
+        "img": "https://coin-images.coingecko.com/coins/images/18095/large/BinaryX-RGB-01_%282%29.png?1696517600",
+        "name": "BinaryX",
+        "derivedBNB": "0.1466294920779963092253487429816975",
+        "derivedUSD": "84.00666065510102142896777605685954",
+        "decimals": "18",
+        "totalLiquidity": "25205.985422650235427881"
+    },
+    {
+        "address": "0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63",
+        "ticker": "XVS",
+        "name": "Venus",
+        "img": "https://coin-images.coingecko.com/coins/images/12677/large/download.jpg?1696512482",
+        "ids": "venus",
+        "derivedBNB": "0.01052793464447201029433646730643189",
+        "derivedUSD": "6.023747335699336401466907790492331",
+        "decimals": "18",
+        "totalLiquidity": "12184.426589524541235436"
+    },
+    {
+        "address": "0x7083609fCE4d1d8Dc0C979AAb8c869Ea2C873402",
+        "ticker": "DOT",
+        "ids": "polkadot",
+        "img": "https://coin-images.coingecko.com/coins/images/12171/large/polkadot.png?1696512008",
+        "name": "Polkadot Token",
+        "derivedBNB": "0.01073035122021883632904692817548552",
+        "derivedUSD": "6.144033138893995447685469767921223",
+        "decimals": "18",
+        "totalLiquidity": "57171.239521043790201258"
+    },
+    {
+        "address": "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47",
+        "ticker": "ADA",
+        "ids": "cardano",
+        "img": "https://coin-images.coingecko.com/coins/images/975/large/cardano.png?1696502090",
+        "name": "Cardano Token",
+        "derivedBNB": "0.0006924466731712504297498618897875709",
+        "derivedUSD": "0.3962282821458672404385751483655842",
+        "decimals": "18",
+        "totalLiquidity": "1059653.580998313075838057"
+    },
+    {
+        "address": "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3",
+        "ticker": "DAI",
+        "ids": "dai",
+        "img": "https://coin-images.coingecko.com/coins/images/9956/large/Badge_Dai.png?1696509996",
+        "name": "Dai Token",
+        "derivedBNB": "0.001739815617346284059349453561498287",
+        "derivedUSD": "0.9954877070109914864394928440321814",
+        "decimals": "18",
+        "totalLiquidity": "168722.228554313810634097"
+    },
+    {
+        "address": "0x87230146E138d3F296a9a77e497A2A83012e9Bc5",
+        "ticker": "SQUID",
+        "ids": "squid-game",
+        "img": "https://coin-images.coingecko.com/coins/images/20506/large/squid.png?1696519912",
+        "name": "Squid Game",
+        "derivedBNB": "0.00001843747634538962321174151113160727",
+        "derivedUSD": "0.01055216718344811698371768842331031",
+        "decimals": "18",
+        "totalLiquidity": "52328340.489625837970450429"
+    },
+    {
+        "address": "0x00e1656e45f18ec6747F5a8496Fd39B50b38396D",
+        "ticker": "BCOIN",
+        "ids": "bomber-coin",
+        "img": "https://coin-images.coingecko.com/coins/images/18567/large/bcoin.png?1696518045",
+        "name": "Bomber Coin",
+        "derivedBNB": "0.00002181836680342474486069102515865461",
+        "derivedUSD": "0.01249603095163870617089409889801299",
+        "decimals": "18",
+        "totalLiquidity": "8382055.178977081150970441"
+    },
+    {
+        "address": "0xbDD4E7Ecd8E51Ff0e1df0999F105acF4F2C193D3",
+        "ticker": "AEVO",
+        "name": "AEVO",
+        "ids": "aevo-exchange",
+        "img": "https://coin-images.coingecko.com/coins/images/35893/large/aevo.png?1710138340",
+        "derivedBNB": "0",
+        "derivedUSD": "0",
+        "decimals": "18",
+        "totalLiquidity": "627021945609.041715147728784509"
+    },
+    {
+        "address": "0xD41FDb03Ba84762dD66a0af1a6C8540FF1ba5dfb",
+        "ticker": "SFP",
+        "img": "https://coin-images.coingecko.com/coins/images/13905/large/sfp.png?1696513647",
+        "name": "SafePal Token",
+        "ids": "safepal",
+        "derivedBNB": "0.001432202590803292646475708704584809",
+        "derivedUSD": "0.8195566188850406452551992684803552",
+        "decimals": "18",
+        "totalLiquidity": "567302.151953639497572441"
+    },
+    {
+        "address": "0x31471E0791fCdbE82fbF4C44943255e923F1b794",
+        "ticker": "PVU",
+        "img": "https://coin-images.coingecko.com/coins/images/17461/large/token-200x200.png?1696517004",
+        "ids": "plant-vs-undead-token",
+        "name": "Plant vs Undead Token",
+        "derivedBNB": "0.000003125509238682040286957864578404472",
+        "derivedUSD": "0.001788978848900591382285514110810867",
+        "decimals": "18",
+        "totalLiquidity": "101625789.141638490983573568"
+    },
+    {
+        "address": "0x5A3010d4d8D3B5fB49f8B6E57FB9E48063f16700",
+        "ticker": "BSCPAD",
+        "ids": "bscpad",
+        "img": "https://coin-images.coingecko.com/coins/images/14135/large/bscpad_logo.jpg?1696513855",
+        "name": "BSCPAD.com",
+        "derivedBNB": "0.000127556641641220788831757364709689",
+        "derivedUSD": "0.07297059177268029527853014872329479",
+        "decimals": "18",
+        "totalLiquidity": "8296973.24891314686844431"
+    }
+]
