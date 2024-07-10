@@ -30,9 +30,14 @@
         "app/pool/Card.jsx",
         "app/pool/page.jsx",
         "components/swap/CurrencyInputPanel.jsx",
-        "hooks/useGetPoolAPR.js",
+        "hooks/useGetPoolAPR.ts",
         "hooks/usePancakeSwapPools.js",
-        "hooks/useSyrupPool.js"
+        "hooks/useSyrupPool.js",
+        "app/dex/addLiquidity/page.jsx",
+        "app/dex/liquidity.jsx",
+        "app/dex/swap.jsx",
+        "app/farm/Card.jsx",
+        "app/farm/page.jsx"
     ],
     "exclude": ["node_modules"]
 }

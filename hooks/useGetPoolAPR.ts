@@ -84,7 +84,7 @@ export async function getTokenPriceInUSD(addressOne: string, addressTwo: string)
             onePriceInUSD,
             twoPriceInUSD
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching token price:', error.message)
         return undefined
     }
