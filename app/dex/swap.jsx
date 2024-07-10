@@ -210,12 +210,12 @@ export default function Swap() {
         setTokenTwoAmount(amount)
     }
 
-    function openModal(asset: number) {
+    function openModal(asset) {
         setChangeToken(asset)
         open()
     }
 
-    function modifyToken(i: number) {
+    function modifyToken(i) {
         setTokenOneAmount(0)
         setTokenTwoAmount(0)
         changeToken === 1 ? setTokenOne(tokenList[i]) : setTokenTwo(tokenList[i])
@@ -332,13 +332,13 @@ export default function Swap() {
     }, [tokenResultTwo, isGetTwoBalanceSuccess, tokenTwo.address])
 
     const isSelected = useMemo(
-        () => (ticker: string) => {
+        () => (ticker) => {
             return ticker === tokenOne.ticker || ticker === tokenTwo.ticker
         },
         [tokenOne, tokenTwo]
     )
 
-    const [isTxDetailOpen, setisTxDetailOpen] = useState<boolean>(false)
+    const [isTxDetailOpen, setisTxDetailOpen] = useState(false)
 
     return (
         <div>

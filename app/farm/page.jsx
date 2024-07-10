@@ -2,28 +2,28 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Button, Grid, Switch, Tabs } from '@mantine/core'
 import classes from './page.module.scss'
-import FarmCard from './Card'
-import { useSyrupPool } from '@/hooks/useSyrupPool'
+import PoolCard from './Card'
+import { usePancakeSwapPools } from '@/hooks/usePancakeSwapPools'
 import _ from 'lodash'
 
-const PoolPage = () => {
+const Page = () => {
     const [activeTab, setActiveTab] = useState('Active')
     const [livePoolList, setlivePoolList] = useState([])
     const [finishedPoolList, setfinishedPoolList] = useState([])
-    const changeActiveTab = (val: string) => {
+    const changeActiveTab = (val) => {
         setActiveTab(val)
     }
     const [isStakedOnly, setisStakedOnly] = useState(false)
 
     const {
-        liveSyrupPools,
-        liveSyrupPoolsLength,
-        finishedSyrupPools,
-        finishedSyrupPoolsLength,
+        livePools,
+        finishedPools,
         loading,
+        livePoolsLength,
+        finishedPoolsLength,
         loadMoreLivePools,
         loadMoreFinishedPools
-    } = useSyrupPool()
+    } = usePancakeSwapPools()
 
     // 处理加载更多逻辑
     const loadMorePools = () => {
@@ -40,12 +40,12 @@ const PoolPage = () => {
         if (!loading) setVisible(false)
     }, [loading])
     useEffect(() => {
-        // 当加载完成或 liveSyrupPools 或 finishedSyrupPools 发生变化时才更新列表
+        // 当加载完成或 livePools 或 finishedPools 发生变化时才更新列表
         if (!loading) {
             // 更新 livePoolList
             const updatedLivePools = isStakedOnly
-                ? liveSyrupPools.filter((e) => e.userStakedAmount !== 0)
-                : liveSyrupPools
+                ? livePools.filter((e) => e.userStakedAmount !== 0)
+                : livePools
             setlivePoolList((prevLivePools) => {
                 // 使用函数式更新，避免依赖项变化导致的重复更新问题
                 if (!_.isEqual(updatedLivePools, prevLivePools)) {
@@ -56,8 +56,8 @@ const PoolPage = () => {
 
             // 更新 finishedPoolList
             const updatedFinishedPools = isStakedOnly
-                ? finishedSyrupPools.filter((e) => e.userStakedAmount !== 0)
-                : finishedSyrupPools
+                ? finishedPools.filter((e) => e.userStakedAmount !== 0)
+                : finishedPools
             setfinishedPoolList((prevFinishedPools) => {
                 // 使用函数式更新，避免依赖项变化导致的重复更新问题
                 if (!_.isEqual(updatedFinishedPools, prevFinishedPools)) {
@@ -66,7 +66,7 @@ const PoolPage = () => {
                 return prevFinishedPools
             })
         }
-    }, [isStakedOnly, loading, liveSyrupPools, finishedSyrupPools])
+    }, [isStakedOnly, loading, livePools, finishedPools])
 
     // 定义样式对象，根据 checked 状态设置不同的背景色
     const switchStyles = {
@@ -81,16 +81,16 @@ const PoolPage = () => {
 
     const isLoadMoreDisabled = useMemo(() => {
         if (activeTab === 'Active' && livePoolList.length > 0) {
-            return livePoolList.length === liveSyrupPoolsLength
+            return livePoolList.length === livePoolsLength
         } else if (activeTab === 'Active' && livePoolList.length === 0) {
             return true
         }
         if (activeTab === 'Inactive' && finishedPoolList.length > 0) {
-            return finishedPoolList.length === finishedSyrupPoolsLength
+            return finishedPoolList.length === finishedPoolsLength
         } else if (activeTab === 'Inactive' && finishedPoolList.length === 0) {
             return true
         }
-    }, [livePoolList, finishedPoolList, liveSyrupPoolsLength, finishedSyrupPoolsLength, activeTab])
+    }, [livePoolList, finishedPoolList, livePoolsLength, finishedPoolsLength, activeTab])
 
     return (
         <div className='bg-black flex items-center justify-center '>
@@ -144,7 +144,7 @@ const PoolPage = () => {
                                 <Grid gutter='xl'>
                                     {livePoolList.map((pool, index) => (
                                         <Grid.Col key={index} span={4}>
-                                            <FarmCard pool={pool} />
+                                            <PoolCard pool={pool} />
                                         </Grid.Col>
                                     ))}
                                 </Grid>
@@ -153,7 +153,7 @@ const PoolPage = () => {
                                 <Grid gutter='xl' grow>
                                     {finishedPoolList.map((pool, index) => (
                                         <Grid.Col key={index} span={4}>
-                                            <FarmCard pool={pool} />
+                                            <PoolCard pool={pool} />
                                         </Grid.Col>
                                     ))}
                                 </Grid>
@@ -172,4 +172,4 @@ const PoolPage = () => {
     )
 }
 
-export default PoolPage
+export default Page

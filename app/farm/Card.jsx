@@ -24,24 +24,24 @@ import bnbTestToken from '@/constants/bnbTestToken.json'
 import pairAbi from '@/constants/pairAbi.json'
 import { useLiquidityStore } from '@/store/liquidity'
 
-type TObject = {
-    name: string
-    apr: string
-    lockup: string
-    image: string
-    userStakedAmount: number // 用户已经 质押的LP 数量
-    pendingCake: string // 用户目前 earn 的数量
-    boostMultiplier: number
-    token0: `0x${string}`
-    token1: `0x${string}`
-    token0Symbol: string
-    token1Symbol: string
-    lpTokenSymbol: string
-    lpTokenAddress: `0x${string}`
-    poolId: number
-    totalStaked: string
-    cakeStakedInUsdt: number
-}
+// type TObject = {
+//     name: string
+//     apr: string
+//     lockup: string
+//     image: string
+//     userStakedAmount: number // 用户已经 质押的LP 数量
+//     pendingCake: string // 用户目前 earn 的数量
+//     boostMultiplier: number
+//     token0: `0x${string}`
+//     token1: `0x${string}`
+//     token0Symbol: string
+//     token1Symbol: string
+//     lpTokenSymbol: string
+//     lpTokenAddress: `0x${string}`
+//     poolId: number
+//     totalStaked: string
+//     cakeStakedInUsdt: number
+// }
 
 // const PANCAKE_SWAP_V2_ROUTER_ADDRESS = '0x10ED43C718714eb63d5aA57B78B54704E256024E'
 // const masterChefV2Address = '0xa5f8C5Dbd5F286960b9d90548680aE5ebFf07652'
@@ -50,7 +50,7 @@ type TObject = {
 // const PANCAKE_SWAP_V2_ROUTER_ADDRESS = '0xB6BA90af76D139AB3170c7df0139636dB6120F7e'
 // const masterChefV2Address = '0xB4A466911556e39210a6bB2FaECBB59E4eB7E43d'
 
-export default function PoolCard({ pool }: { pool: TObject }) {
+export default function PoolCard({ pool }) {
     const { address, chainId } = useAccount()
     const PANCAKE_SWAP_V2_ROUTER_ADDRESS =
         chainId === 56
@@ -65,10 +65,10 @@ export default function PoolCard({ pool }: { pool: TObject }) {
     const slippage = liquidity.slippage
     const currentMinutes = liquidity.currentMinutes
 
-    const changeSlippage = (value: string) => {
+    const changeSlippage = (value) => {
         setSlippage(value)
     }
-    const changeDeadLine = (value: string) => {
+    const changeDeadLine = (value) => {
         setCurrentMinutes(value)
         setTxDeadline()
     }
@@ -80,16 +80,16 @@ export default function PoolCard({ pool }: { pool: TObject }) {
         error: errorStake
     } = useWriteContract()
 
-    const [isShowConfirm, setisShowConfirm] = useState<boolean>(false)
+    const [isShowConfirm, setisShowConfirm] = useState(false)
     // 控制弹窗内的按钮loading
-    const [confirmLoading, setconfirmLoading] = useState<boolean>(false)
-    const [amount, setamount] = useState<string>('')
-    const [userLPtokenBalance, setuserLPtokenBalance] = useState<number>(0)
-    const [tokenOneBalance, settokenOneBalance] = useState<number>(0)
-    const [tokenTwoBalance, settokenTwoBalance] = useState<number>(0)
+    const [confirmLoading, setconfirmLoading] = useState(false)
+    const [amount, setamount] = useState('')
+    const [userLPtokenBalance, setuserLPtokenBalance] = useState(0)
+    const [tokenOneBalance, settokenOneBalance] = useState(0)
+    const [tokenTwoBalance, settokenTwoBalance] = useState(0)
 
     // 添加流动性 弹窗控制
-    const [isAddLiquidityOpen, setisAddLiquidityOpen] = useState<boolean>(false)
+    const [isAddLiquidityOpen, setisAddLiquidityOpen] = useState(false)
 
     //  读取用户address 在 LP Token 的余额
     const { data: lptokenData, isSuccess: isSuccessLpTokenBalance } = useBalance({
@@ -128,8 +128,8 @@ export default function PoolCard({ pool }: { pool: TObject }) {
         }
     }, [isSuccessTokenOne, tokenOneData, isSuccessTokenTwo, tokenTwoData])
 
-    const [isTxDetailOpen, setisTxDetailOpen] = useState<boolean>(false)
-    const [isTxDetailErrorOpen, setisTxDetailErrorOpen] = useState<boolean>(false)
+    const [isTxDetailOpen, setisTxDetailOpen] = useState(false)
+    const [isTxDetailErrorOpen, setisTxDetailErrorOpen] = useState(false)
     const [txDetailError, settxDetailError] = useState()
     const [txHash, settxHash] = useState('')
 
@@ -221,9 +221,9 @@ export default function PoolCard({ pool }: { pool: TObject }) {
         return parseFloat(amount) > 0 && userLPtokenBalance > parseFloat(amount)
     }, [userLPtokenBalance, amount])
 
-    const [isShowWithdraw, setisShowWithdraw] = useState<boolean>(false)
+    const [isShowWithdraw, setisShowWithdraw] = useState(false)
     const [withdrawAmount, setwithdrawAmount] = useState('')
-    const [withdrawLoading, setwithdrawLoading] = useState<boolean>(false)
+    const [withdrawLoading, setwithdrawLoading] = useState(false)
 
     const isAbleWithdraw = useMemo(() => {
         if (userLPtokenBalance === 0) return false
@@ -279,7 +279,7 @@ export default function PoolCard({ pool }: { pool: TObject }) {
         }
     }, [isSuccessWithdraw, withdrawData, isErrorWithdraw, errorWithdraw])
 
-    const [isDetail, setisDetail] = useState<boolean>(false)
+    const [isDetail, setisDetail] = useState(false)
 
     const isEnableHarvest = useMemo(() => {
         return Number(pool.pendingCake) > 0

@@ -23,11 +23,11 @@ import { useLiquidityStore } from '@/store/liquidity'
 // const PANCAKE_SWAP_V2_ROUTER_ADDRESS = '0xB6BA90af76D139AB3170c7df0139636dB6120F7e'
 // const PANCAKE_SWAP_V2_FACTORY_ADDRESS = '0x6725F303b657a9451d8BA641348b6761A6CC7a17'
 
-type TObject = {
-    ticker: string
-    img: string
-    address: string
-}
+// type TObject = {
+//     ticker: string
+//     img: string
+//     address: string
+// }
 export default function Page() {
     const { address, chainId } = useAccount()
 
@@ -40,8 +40,8 @@ export default function Page() {
             ? '0xca143ce32fe78f1f7019d7d551a6402fc5350c73'
             : '0x6725F303b657a9451d8BA641348b6761A6CC7a17'
 
-    const [tokenOne, setTokenOne] = useState<TObject>({ ticker: '', img: '', address: '' })
-    const [tokenTwo, setTokenTwo] = useState<TObject>({ ticker: '', img: '', address: '' })
+    const [tokenOne, setTokenOne] = useState({ ticker: '', img: '', address: '' })
+    const [tokenTwo, setTokenTwo] = useState({ ticker: '', img: '', address: '' })
     const [tokenOneAmount, setTokenOneAmount] = useState('')
     const [tokenTwoAmount, setTokenTwoAmount] = useState('')
     const [tokenOneBalance, settokenOneBalance] = useState(0)
@@ -52,22 +52,22 @@ export default function Page() {
     const [prices, setPrices] = useState(0)
     const [switchPrices, setswitchPrices] = useState(0)
 
-    const [isShowAdd, setisShowAdd] = useState<Boolean>(false)
+    const [isShowAdd, setisShowAdd] = useState(false)
 
     const { liquidity } = useLiquidityStore()
-    function openModal(asset: number) {
+    function openModal(asset) {
         setChangeToken(asset)
         open()
     }
 
-    function modifyToken(i: number) {
+    function modifyToken(i) {
         setTokenOneAmount('')
         setTokenTwoAmount('')
         changeToken === 1 ? setTokenOne(tokenList[i]) : setTokenTwo(tokenList[i])
         close()
     }
     const isSelected = useMemo(
-        () => (ticker: string) => {
+        () => (ticker) => {
             return ticker === tokenOne.ticker || ticker === tokenTwo.ticker
         },
         [tokenOne, tokenTwo]
@@ -271,7 +271,7 @@ export default function Page() {
     // }, [])
 
     // 点击supply后 控制弹窗显示
-    const [isShowConfirm, setisShowConfirm] = useState<boolean>(false)
+    const [isShowConfirm, setisShowConfirm] = useState(false)
 
     // 获取总的LP数量
     const { data: totalSupplyLP, isSuccess: isSuccessLP } = useReadContract({
@@ -315,7 +315,7 @@ export default function Page() {
     }
 
     // 控制弹窗内的Confirm supply按钮loading
-    const [confirmLoading, setconfirmLoading] = useState<boolean>(false)
+    const [confirmLoading, setconfirmLoading] = useState(false)
 
     // 授权 token 给pancakeswap v2 router
     const {
@@ -404,9 +404,9 @@ export default function Page() {
         }
     }, [isErrorAddLiquidity, addLiquidityError])
 
-    const [isTxDetailOpen, setisTxDetailOpen] = useState<boolean>(false)
-    const [isTxDetailErrorOpen, setisTxDetailErrorOpen] = useState<boolean>(false)
-    const [liquidityHash, setliquidityHash] = useState<string>('')
+    const [isTxDetailOpen, setisTxDetailOpen] = useState(false)
+    const [isTxDetailErrorOpen, setisTxDetailErrorOpen] = useState(false)
+    const [liquidityHash, setliquidityHash] = useState('')
 
     return (
         <div className=' bg-black flex justify-center'>

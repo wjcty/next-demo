@@ -20,28 +20,28 @@ import MyModal from '@/components/myModal/page'
 import MyButton from '@/components/myButton/page'
 import bnbTestToken from '@/constants/bnbTestToken.json'
 
-type TObject = {
-    name: string
-    apr: string
-    lockup: string
-    image: string
-    userStakedAmount: number // 用户已经 质押的LP 数量
-    pendingCake: string // 用户目前 earn 的数量
-    stakedToken: `0x${string}`
-    rewardToken: `0x${string}`
-    poolId: number
-    totalStaked: string
-    stakedTokenSymbol: string
-    rewardTokenSymbol: string
-    endsInDay: number
-    endsInSeconds: string
-}
+// type TObject = {
+//     name: string
+//     apr: string
+//     lockup: string
+//     image: string
+//     userStakedAmount: number // 用户已经 质押的LP 数量
+//     pendingCake: string // 用户目前 earn 的数量
+//     stakedToken: `0x${string}`
+//     rewardToken: `0x${string}`
+//     poolId: number
+//     totalStaked: string
+//     stakedTokenSymbol: string
+//     rewardTokenSymbol: string
+//     endsInDay: number
+//     endsInSeconds: string
+// }
 // const masterChefV2Address = '0xa5f8C5Dbd5F286960b9d90548680aE5ebFf07652'
 
 // testnet
 // const masterChefV2Address = '0xB4A466911556e39210a6bB2FaECBB59E4eB7E43d'
 
-export default function PoolCard({ pool }: { pool: TObject }) {
+export default function PoolCard({ pool }) {
     const { address, chainId } = useAccount()
 
     const masterChefV2Address =
@@ -56,13 +56,13 @@ export default function PoolCard({ pool }: { pool: TObject }) {
         error: errorStake
     } = useWriteContract()
 
-    const [isShowConfirm, setisShowConfirm] = useState<boolean>(false)
+    const [isShowConfirm, setisShowConfirm] = useState(false)
     // 控制弹窗内的按钮loading
-    const [confirmLoading, setconfirmLoading] = useState<boolean>(false)
-    const [amount, setamount] = useState<string>('')
-    const [stakedTokenBalance, setstakedTokenBalance] = useState<number>(0)
-    const [tokenOneBalance, settokenOneBalance] = useState<number>(0)
-    const [tokenTwoBalance, settokenTwoBalance] = useState<number>(0)
+    const [confirmLoading, setconfirmLoading] = useState(false)
+    const [amount, setamount] = useState('')
+    const [stakedTokenBalance, setstakedTokenBalance] = useState(0)
+    const [tokenOneBalance, settokenOneBalance] = useState(0)
+    const [tokenTwoBalance, settokenTwoBalance] = useState(0)
 
     //  读取用户address 在 stakedToken 的余额
     const { data: lptokenData, isSuccess: isSuccessLpTokenBalance } = useBalance({
@@ -71,8 +71,8 @@ export default function PoolCard({ pool }: { pool: TObject }) {
         enabled: isShowConfirm // 当用户点击approve 打开弹窗后才去获取
     })
 
-    const [isTxDetailOpen, setisTxDetailOpen] = useState<boolean>(false)
-    const [isTxDetailErrorOpen, setisTxDetailErrorOpen] = useState<boolean>(false)
+    const [isTxDetailOpen, setisTxDetailOpen] = useState(false)
+    const [isTxDetailErrorOpen, setisTxDetailErrorOpen] = useState(false)
     const [txDetailError, settxDetailError] = useState()
     const [txHash, settxHash] = useState('')
 
@@ -162,9 +162,9 @@ export default function PoolCard({ pool }: { pool: TObject }) {
         return parseFloat(amount) > 0 && stakedTokenBalance > parseFloat(amount)
     }, [stakedTokenBalance, amount])
 
-    const [isShowWithdraw, setisShowWithdraw] = useState<boolean>(false)
+    const [isShowWithdraw, setisShowWithdraw] = useState(false)
     const [withdrawAmount, setwithdrawAmount] = useState('')
-    const [withdrawLoading, setwithdrawLoading] = useState<boolean>(false)
+    const [withdrawLoading, setwithdrawLoading] = useState(false)
 
     const isAbleWithdraw = useMemo(() => {
         if (stakedTokenBalance === 0) return false
@@ -220,7 +220,7 @@ export default function PoolCard({ pool }: { pool: TObject }) {
         }
     }, [isSuccessWithdraw, withdrawData, isErrorWithdraw, errorWithdraw])
 
-    const [isDetail, setisDetail] = useState<boolean>(false)
+    const [isDetail, setisDetail] = useState(false)
 
     const isEnableHarvest = useMemo(() => {
         return Number(pool.pendingCake) > 0
