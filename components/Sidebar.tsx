@@ -9,7 +9,13 @@ import {
     IconPool,
     IconBuildingCottage
 } from '@tabler/icons-react'
+import { useAccount } from 'wagmi'
 
+type TObject = {
+    path: string
+    icon: JSX.Element
+    title: string
+}
 export default function Sidebar() {
     const menu = [
         {
@@ -44,15 +50,36 @@ export default function Sidebar() {
         // }
     ]
     const [activeIndex, setactiveIndex] = useState(0)
+    const [tempIndex, settempIndex] = useState(0)
     const router = useRouter()
+
+    const { isConnected } = useAccount()
     const HandleDelegation = (target: HTMLElement) => {
-        let item = menu.find((j, index) => {
-            if (j.title === target.innerText) {
-                setactiveIndex(index)
-                return j
-            }
-        })
-        if (item) router.push(item!.path)
+        if (isConnected) {
+            let item = menu.find((j, index) => {
+                if (j.title === target.innerText) {
+                    setactiveIndex(index)
+                    return j
+                }
+            })
+            router.push(item!.path)
+        } else {
+            let item = menu.find((j, index) => {
+                if (j.title === target.innerText) {
+                    settempIndex(index)
+                    return j
+                }
+            })
+            if (item) handleConnect(item, tempIndex)
+        }
+    }
+
+    const handleConnect = async (item: TObject, index: number) => {
+        try {
+            await window.ethereum.request({ method: 'eth_requestAccounts' })
+            setactiveIndex(index)
+            router.push(item!.path)
+        } catch (error) {}
     }
 
     // 路由更改 菜单也随之更改
