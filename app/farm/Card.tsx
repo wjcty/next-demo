@@ -15,42 +15,38 @@ import { useEffect, useMemo, useState } from 'react'
 import style from './page.module.scss'
 import bep20Abi from '@/constants/bep20Abi.json'
 import { formatEther, parseEther } from 'viem'
-import { useAccount, useBalance, useReadContract, useWriteContract } from 'wagmi'
+import { useAccount, useBalance, useReadContract, BaseError } from 'wagmi'
+import { writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import masterchefv2Abi from '@/constants/masterchefv2Abi.json'
 import cakeV2RouterAbi from '@/constants/cakev2RouterAbi.json'
 import MyModal from '@/components/myModal/page'
 import MyButton from '@/components/myButton/page'
 import bnbTestToken from '@/constants/bnbTestToken.json'
+import tokenList from '@/constants/tokenList.json'
 import pairAbi from '@/constants/pairAbi.json'
 import { useLiquidityStore } from '@/store/liquidity'
+import { config } from '@/lib/config'
 
-// type TObject = {
-//     name: string
-//     apr: string
-//     lockup: string
-//     image: string
-//     userStakedAmount: number // 用户已经 质押的LP 数量
-//     pendingCake: string // 用户目前 earn 的数量
-//     boostMultiplier: number
-//     token0: `0x${string}`
-//     token1: `0x${string}`
-//     token0Symbol: string
-//     token1Symbol: string
-//     lpTokenSymbol: string
-//     lpTokenAddress: `0x${string}`
-//     poolId: number
-//     totalStaked: string
-//     cakeStakedInUsdt: number
-// }
+type TObject = {
+    name: string
+    apr: number
+    lockup: string
+    image: string
+    userStakedAmount: number // 用户已经 质押的LP 数量
+    pendingCake: string // 用户目前 earn 的数量
+    boostMultiplier: number
+    token0: `0x${string}`
+    token1: `0x${string}`
+    token0Symbol: string
+    token1Symbol: string
+    lpTokenSymbol: string
+    lpTokenAddress: `0x${string}`
+    poolId: number
+    totalStaked: string
+    cakeStakedInUsdt: number
+}
 
-// const PANCAKE_SWAP_V2_ROUTER_ADDRESS = '0x10ED43C718714eb63d5aA57B78B54704E256024E'
-// const masterChefV2Address = '0xa5f8C5Dbd5F286960b9d90548680aE5ebFf07652'
-
-// testnet
-// const PANCAKE_SWAP_V2_ROUTER_ADDRESS = '0xB6BA90af76D139AB3170c7df0139636dB6120F7e'
-// const masterChefV2Address = '0xB4A466911556e39210a6bB2FaECBB59E4eB7E43d'
-
-export default function PoolCard({ pool }) {
+export default function PoolCard({ pool }: { pool: TObject }) {
     const { address, chainId } = useAccount()
     const PANCAKE_SWAP_V2_ROUTER_ADDRESS =
         chainId === 56
@@ -65,20 +61,13 @@ export default function PoolCard({ pool }) {
     const slippage = liquidity.slippage
     const currentMinutes = liquidity.currentMinutes
 
-    const changeSlippage = (value) => {
+    const changeSlippage = (value: string) => {
         setSlippage(value)
     }
-    const changeDeadLine = (value) => {
+    const changeDeadLine = (value: string) => {
         setCurrentMinutes(value)
         setTxDeadline()
     }
-    const {
-        writeContract: writeForStake,
-        data: stakeData,
-        isSuccess: isSuccessStake,
-        isError: isErrorStake,
-        error: errorStake
-    } = useWriteContract()
 
     const [isShowConfirm, setisShowConfirm] = useState(false)
     // 控制弹窗内的按钮loading
@@ -95,6 +84,7 @@ export default function PoolCard({ pool }) {
     const { data: lptokenData, isSuccess: isSuccessLpTokenBalance } = useBalance({
         address,
         token: pool.lpTokenAddress,
+        // @ts-ignore
         enabled: isShowConfirm // 当用户点击approve 打开弹窗后才去获取
     })
 
@@ -102,12 +92,14 @@ export default function PoolCard({ pool }) {
     const { data: tokenOneData, isSuccess: isSuccessTokenOne } = useBalance({
         address,
         token: pool.token0,
+        // @ts-ignore
         enabled: isAddLiquidityOpen // 当用户点击approve 打开弹窗后才去获取
     })
     //  读取用户address 在  token1 的余额
     const { data: tokenTwoData, isSuccess: isSuccessTokenTwo } = useBalance({
         address,
         token: pool.token1,
+        // @ts-ignore
         enabled: isAddLiquidityOpen // 当用户点击approve 打开弹窗后才去获取
     })
 
@@ -130,7 +122,7 @@ export default function PoolCard({ pool }) {
 
     const [isTxDetailOpen, setisTxDetailOpen] = useState(false)
     const [isTxDetailErrorOpen, setisTxDetailErrorOpen] = useState(false)
-    const [txDetailError, settxDetailError] = useState()
+    const [txDetailError, settxDetailError] = useState('')
     const [txHash, settxHash] = useState('')
 
     useEffect(() => {
@@ -143,8 +135,10 @@ export default function PoolCard({ pool }) {
         }
     }, [isSuccessLpTokenBalance, lptokenData])
 
-    const ChangeAmount = (e) => {
-        setamount(e.target.value)
+    const ChangeAmount = (e: any) => {
+        const target = e.target as HTMLInputElement
+        let value = target.value
+        setamount(value)
     }
 
     const handleTokenOneMax = () => {
@@ -155,70 +149,90 @@ export default function PoolCard({ pool }) {
         setisShowConfirm(true)
     }
 
-    const {
-        writeContract: writeForApprove,
-        data: approveData,
-        isSuccess: isSuccessApprove,
-        isError: isErrorApprove,
-        error: errorApprove
-    } = useWriteContract()
-    // 用户进行staked操作 先approve
+    // 用户进行staked操作
     const handleConfirm = async () => {
         setconfirmLoading(true)
-        writeForApprove({
-            address: pool.lpTokenAddress,
-            functionName: 'approve',
-            args: [masterChefV2Address, parseEther(amount)],
-            abi: bep20Abi
-        })
+        // approve
+        let approveReceipt
+        try {
+            const res = await writeContract(config, {
+                address: pool.lpTokenAddress,
+                functionName: 'approve',
+                args: [masterChefV2Address, parseEther(amount)],
+                abi: pairAbi
+            })
+
+            approveReceipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
+        } catch (error) {
+            setconfirmLoading(false)
+            return
+        }
+
+        // staked
+        if (approveReceipt.status === 'success') {
+            let txReceipt
+            try {
+                const res = await writeContract(config, {
+                    address: masterChefV2Address,
+                    abi: masterchefv2Abi,
+                    functionName: 'deposit',
+                    args: [pool.poolId, parseEther(amount)]
+                })
+
+                txReceipt = await waitForTransactionReceipt(config, {
+                    hash: res
+                })
+
+                if (txReceipt.status === 'success') {
+                    setconfirmLoading(false)
+                    setisShowConfirm(false)
+                    setisTxDetailOpen(true)
+                    settxHash(res)
+                }
+            } catch (error) {
+                setconfirmLoading(false)
+                setisShowConfirm(false)
+                setisTxDetailErrorOpen(true)
+                settxDetailError((error as BaseError).shortMessage)
+            }
+        }
     }
 
-    useEffect(() => {
-        //approve 成功后 staked
-        if (isSuccessApprove) {
-            writeForStake({
+    // 提取用户已经赚取的收益 earn
+    const handleHarvest = async () => {
+        let txReceipt
+        try {
+            const res = await writeContract(config, {
                 address: masterChefV2Address,
                 abi: masterchefv2Abi,
                 functionName: 'deposit',
-                args: [pool.poolId, parseEther(amount)]
+                args: [pool.poolId, parseEther('0')]
             })
-        }
-        if (isErrorApprove) {
-            setconfirmLoading(false)
-        }
-    }, [isErrorApprove, isSuccessApprove, amount, pool.poolId, writeForStake])
 
-    // 提取用户已经赚取的收益
-    const handleHarvest = async () => {
-        writeForStake({
-            address: masterChefV2Address,
-            abi: masterchefv2Abi,
-            functionName: 'deposit',
-            args: [pool.poolId, parseEther('0')]
-        })
-    }
+            txReceipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
 
-    // 处理 staked 成功失败操作
-    useEffect(() => {
-        if (isSuccessStake) {
-            setconfirmLoading(false)
-            setisShowConfirm(false)
-            setisTxDetailOpen(true)
-            settxHash(stakeData)
-        }
-        if (isErrorStake) {
+            if (txReceipt.status === 'success') {
+                setconfirmLoading(false)
+                setisShowConfirm(false)
+                setisTxDetailOpen(true)
+                settxHash(res)
+            }
+        } catch (error) {
             setconfirmLoading(false)
             setisShowConfirm(false)
             setisTxDetailErrorOpen(true)
-            // todo
-            settxDetailError('')
+            settxDetailError((error as BaseError).shortMessage)
         }
-    }, [isSuccessStake, stakeData, isErrorStake, errorStake])
+    }
 
     const isDisableConfirm = useMemo(() => {
         if (userLPtokenBalance === 0) return true
         if (!parseFloat(amount)) return true // 0 NAN
-        return parseFloat(amount) > 0 && userLPtokenBalance > parseFloat(amount)
+        return parseFloat(amount) > 0 && userLPtokenBalance < parseFloat(amount)
     }, [userLPtokenBalance, amount])
 
     const [isShowWithdraw, setisShowWithdraw] = useState(false)
@@ -238,46 +252,41 @@ export default function PoolCard({ pool }) {
         setwithdrawAmount(String(userLPtokenBalance))
     }
 
-    const changeWithdrawAmount = (e) => {
-        setwithdrawAmount(e.target.value)
+    const changeWithdrawAmount = (e: any) => {
+        const target = e.target as HTMLInputElement
+        let value = target.value
+        setwithdrawAmount(value)
     }
-
-    const {
-        writeContract: writeForWithdraw,
-        data: withdrawData,
-        isSuccess: isSuccessWithdraw,
-        isError: isErrorWithdraw,
-        error: errorWithdraw
-    } = useWriteContract()
 
     // 用户点击 - 按钮 ，减少staked的数量
-    const withdrawFn = () => {
+    const withdrawFn = async () => {
         setwithdrawLoading(true)
-        writeForWithdraw({
-            address: masterChefV2Address,
-            abi: masterchefv2Abi,
-            functionName: 'withdraw',
-            args: [pool.poolId, parseEther(withdrawAmount)]
-        })
-    }
+        let txReceipt
+        try {
+            const res = await writeContract(config, {
+                address: masterChefV2Address,
+                abi: masterchefv2Abi,
+                functionName: 'withdraw',
+                args: [pool.poolId, parseEther(withdrawAmount)]
+            })
 
-    useEffect(() => {
-        if (isSuccessWithdraw) {
-            setisShowWithdraw(false)
-            setwithdrawLoading(false)
-            setisTxDetailOpen(true)
-            settxHash(withdrawData)
-        }
+            txReceipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
 
-        if (isErrorWithdraw) {
+            if (txReceipt.status === 'success') {
+                setisShowWithdraw(false)
+                setwithdrawLoading(false)
+                setisTxDetailOpen(true)
+                settxHash(res)
+            }
+        } catch (error) {
             setisShowWithdraw(false)
             setwithdrawLoading(false)
             setisTxDetailErrorOpen(true)
-            // todo
-            console.log(123, errorWithdraw)
-            settxDetailError('')
+            settxDetailError((error as BaseError).shortMessage)
         }
-    }, [isSuccessWithdraw, withdrawData, isErrorWithdraw, errorWithdraw])
+    }
 
     const [isDetail, setisDetail] = useState(false)
 
@@ -287,26 +296,42 @@ export default function PoolCard({ pool }) {
 
     const getPoolPairToken0Img = useMemo(() => {
         if (pool.token0Symbol) {
-            const item = bnbTestToken.find((e) => e.ticker === pool.token0Symbol.toUpperCase())
+            const item =
+                chainId === 56
+                    ? tokenList.find(
+                          (e) => e.ticker.toUpperCase() === pool.token0Symbol.toUpperCase()
+                      )
+                    : bnbTestToken.find(
+                          (e) => e.ticker.toUpperCase() === pool.token0Symbol.toUpperCase()
+                      )
             if (item) return item.img
         }
-    }, [pool.token0Symbol])
+    }, [pool.token0Symbol, chainId])
 
     const getPoolPairToken1Img = useMemo(() => {
         if (pool.token1Symbol) {
-            const item = bnbTestToken.find((e) => e.ticker === pool.token1Symbol.toUpperCase())
+            const item =
+                chainId === 56
+                    ? tokenList.find(
+                          (e) => e.ticker.toUpperCase() === pool.token1Symbol.toUpperCase()
+                      )
+                    : bnbTestToken.find(
+                          (e) => e.ticker.toUpperCase() === pool.token1Symbol.toUpperCase()
+                      )
             if (item) return item.img
         }
-    }, [pool.token1Symbol])
+    }, [pool.token1Symbol, chainId])
 
     const [tokenOneLiquidityAmount, settokenOneLiquidityAmount] = useState('')
     const [tokenTwoLiquidityAmount, settokenTwoLiquidityAmount] = useState('')
 
-    const ChangeTokenOneLiquidity = (e) => {
-        settokenOneLiquidityAmount(e.target.value)
-        if (e.target.value && prices) {
-            const value = parseFloat(e.target.value) * prices
-            settokenTwoLiquidityAmount(value.toFixed(18))
+    const ChangeTokenOneLiquidity = (e: any) => {
+        const target = e.target as HTMLInputElement
+        let value = target.value
+        settokenOneLiquidityAmount(value)
+        if (value && prices) {
+            const amount = parseFloat(value) * prices
+            settokenTwoLiquidityAmount(amount.toFixed(18))
         } else {
             settokenTwoLiquidityAmount('0')
         }
@@ -322,11 +347,13 @@ export default function PoolCard({ pool }) {
         }
     }
 
-    const ChangeTokenTwoLiquidity = (e) => {
-        settokenTwoLiquidityAmount(e.target.value)
-        if (e.target.value && switchPrices) {
-            const value = Number(e.target.value) * switchPrices
-            settokenOneLiquidityAmount(value.toFixed(18))
+    const ChangeTokenTwoLiquidity = (e: any) => {
+        const target = e.target as HTMLInputElement
+        let value = target.value
+        settokenTwoLiquidityAmount(value)
+        if (value && switchPrices) {
+            const amount = Number(value) * switchPrices
+            settokenOneLiquidityAmount(amount.toFixed(18))
         } else {
             settokenOneLiquidityAmount('0')
         }
@@ -377,8 +404,12 @@ export default function PoolCard({ pool }) {
         address: pool.lpTokenAddress,
         abi: pairAbi,
         functionName: 'token0',
+        // @ts-ignore
         enabled: !!isAddLiquidityOpen
-    })
+    }) as {
+        data: string
+    }
+
     // 获取pair 交易对的价格，添加流动性以比例添加
     const [prices, setprices] = useState(0)
     const [switchPrices, setswitchPrices] = useState(0)
@@ -386,14 +417,17 @@ export default function PoolCard({ pool }) {
         address: pool.lpTokenAddress,
         abi: pairAbi,
         functionName: 'getReserves',
+        // @ts-ignore
         enabled: !!isAddLiquidityOpen // 确保在 打开添加流动性弹窗 时才进行查询
-    })
+    }) as {
+        data: bigint[]
+    }
 
     // 计算价格并更新
     useEffect(() => {
         if (pairReservesData) {
-            const reserve0 = parseInt(pairReservesData[0]) // reserve0 对应 token0
-            const reserve1 = parseInt(pairReservesData[1]) // reserve1 对应 token1
+            const reserve0 = parseInt(pairReservesData[0].toString()) // reserve0 对应 token0
+            const reserve1 = parseInt(pairReservesData[1].toString()) // reserve1 对应 token1
 
             // price == a/b
             // switchPrices = b/a
@@ -431,8 +465,12 @@ export default function PoolCard({ pool }) {
         address: pool.lpTokenAddress,
         abi: pairAbi,
         functionName: 'totalSupply',
-        enabled: isShowAddConfirm //  打开 确认添加流动性 弹窗时才进行查询
-    })
+        // @ts-ignore
+        enabled: !!isShowAddConfirm //  打开 确认添加流动性 弹窗时才进行查询
+    }) as {
+        data: bigint
+        isSuccess: Boolean
+    }
 
     const [lpReceive, setLpReceive] = useState('0')
     const [userShare, setUserShare] = useState('0')
@@ -440,7 +478,8 @@ export default function PoolCard({ pool }) {
         if (
             isSuccessLP &&
             Number(tokenOneLiquidityAmount) !== 0 &&
-            Number(tokenOneLiquidityAmount) !== 0
+            Number(tokenOneLiquidityAmount) !== 0 &&
+            formatEther(totalSupplyLP) !== '0'
         ) {
             const reserveA = pairReservesData[0]
             const reserveB = pairReservesData[1]
@@ -476,52 +515,59 @@ export default function PoolCard({ pool }) {
         lpReceive
     ])
 
-    // 授权 token 给pancakeswap v2 router
-    const {
-        writeContract: writeForApprove1,
-        isSuccess: approveSuccess1,
-        isError: isApproveError1
-    } = useWriteContract()
-    const {
-        writeContract: writeForApprove2,
-        isSuccess: approveSuccess2,
-        isError: isApproveError2
-    } = useWriteContract()
     // 最终确认 添加流动性
-    const handleConfirmAdd = () => {
+    const handleConfirmAdd = async () => {
         setconfirmAddLoading(true)
         // 授权后 才能 confirm 交易
-        writeForApprove1({
-            address: pool.token0,
-            abi: bep20Abi,
-            functionName: 'approve',
-            args: [PANCAKE_SWAP_V2_ROUTER_ADDRESS, parseEther(tokenOneLiquidityAmount)]
-        })
-        writeForApprove2({
-            address: pool.token1,
-            abi: bep20Abi,
-            functionName: 'approve',
-            args: [PANCAKE_SWAP_V2_ROUTER_ADDRESS, parseEther(tokenTwoLiquidityAmount)]
-        })
+
+        let approve1Receipt, approve2Receipt
+        try {
+            const res = await writeContract(config, {
+                address: pool.token0,
+                abi: bep20Abi,
+                functionName: 'approve',
+                args: [PANCAKE_SWAP_V2_ROUTER_ADDRESS, parseEther(tokenOneLiquidityAmount)]
+            })
+
+            approve1Receipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
+        } catch (error) {
+            setconfirmAddLoading(false)
+            setisShowAddConfirm(false)
+            return
+        }
+
+        try {
+            const res = await writeContract(config, {
+                address: pool.token1,
+                abi: bep20Abi,
+                functionName: 'approve',
+                args: [PANCAKE_SWAP_V2_ROUTER_ADDRESS, parseEther(tokenTwoLiquidityAmount)]
+            })
+            approve2Receipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
+        } catch (error) {
+            setconfirmAddLoading(false)
+            setisShowAddConfirm(false)
+            return
+        }
+
+        if (approve1Receipt.status === 'success' && approve2Receipt.status === 'success') {
+            handleAddAfterApprove()
+        }
     }
 
-    const {
-        writeContract: writeForAddLiquidity,
-        data: addLiquidityData,
-        isSuccess: isSuccessAddLiquidity,
-        isError: isErrorAddLiquidity,
-        error: addLiquidityError
-    } = useWriteContract()
-
-    useEffect(() => {
+    const handleAddAfterApprove = async () => {
+        let txReceipt
         const slippageFactor = parseEther((1 - Number(slippage) / 100).toString())
         const intputTokenOneAmount = parseEther(tokenOneLiquidityAmount)
         const intputTokenTwoAmount = parseEther(tokenTwoLiquidityAmount)
         const minTokenOneAmount = (intputTokenOneAmount * slippageFactor) / parseEther('1')
         const minTokenTwoAmount = (intputTokenTwoAmount * slippageFactor) / parseEther('1')
-        // 两个token 授权后才能进行添加流动性
-        if (approveSuccess1 && approveSuccess2) {
-            writeForAddLiquidity({
+        try {
+            const res = await writeContract(config, {
                 address: PANCAKE_SWAP_V2_ROUTER_ADDRESS,
                 abi: cakeV2RouterAbi,
                 functionName: 'addLiquidity',
@@ -533,42 +579,61 @@ export default function PoolCard({ pool }) {
                     minTokenOneAmount,
                     minTokenTwoAmount,
                     address,
-                    liquidity.txDeadline
+                    Math.floor(Date.now() / 1000) + 60 * Number(liquidity.currentMinutes)
                 ]
             })
-        } else if (isApproveError1 && isApproveError2) {
-            setconfirmAddLoading(false)
-        }
-    }, [
-        writeForAddLiquidity,
-        approveSuccess1,
-        approveSuccess2,
-        isApproveError1,
-        isApproveError2,
-        address,
-        pool.token0,
-        pool.token1,
-        liquidity.txDeadline,
-        slippage,
-        tokenOneLiquidityAmount,
-        tokenTwoLiquidityAmount
-    ])
-
-    useEffect(() => {
-        if (isSuccessAddLiquidity) {
-            setisShowAddConfirm(false)
-            setconfirmAddLoading(false)
-            setisTxDetailOpen(true)
-            settxHash(addLiquidityData)
-        } else if (isErrorAddLiquidity) {
+            txReceipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
+            if (txReceipt.status === 'success') {
+                waitForTransactionReceipt
+                setisShowAddConfirm(false)
+                setconfirmAddLoading(false)
+                setisTxDetailOpen(true)
+                settxHash(res)
+            }
+        } catch (error) {
             setisShowAddConfirm(false)
             setconfirmAddLoading(false)
             setisAddLiquidityOpen(false)
             setisTxDetailErrorOpen(true)
-            console.log(123, addLiquidityError)
-            settxDetailError('')
+            settxDetailError((error as BaseError).shortMessage)
         }
-    }, [isSuccessAddLiquidity, addLiquidityData, isErrorAddLiquidity, addLiquidityError])
+    }
+
+    const toThousands = function (num: any) {
+        var l
+        if (num < 0) {
+            l = 4
+        } else {
+            l = 3
+        }
+        let tail = ''
+        let ind = num.toString().indexOf('.')
+        if (ind > 0) {
+            tail = num.toString().substr(ind)
+        }
+
+        num = Math.floor(num)
+        num = (num || 0).toString()
+        let result = ''
+        while (num.length > l) {
+            result = ',' + num.slice(-3) + result
+            num = num.slice(0, num.length - 3)
+        }
+        if (num) {
+            result = num + result
+        }
+        return result + tail
+    }
+
+    const getApr = useMemo(() => {
+        if (!pool.apr) return '0%'
+        if (pool.apr.toFixed(2) === '0.00') {
+            return '0%'
+        }
+        return `${pool.apr.toFixed(2)}%`
+    }, [pool.apr])
     return (
         <Card shadow='sm' padding='lg' style={{ backgroundColor: '#171717', color: '#fff' }}>
             <Card.Section style={{ padding: '20px' }}>
@@ -634,7 +699,7 @@ export default function PoolCard({ pool }) {
                         APR:
                     </Text>
                     <Text size='sm' style={{ color: '#ff5c00' }}>
-                        {pool.apr}
+                        {getApr}
                     </Text>
                 </Group>
                 <Group
@@ -677,7 +742,7 @@ export default function PoolCard({ pool }) {
                         color={isEnableHarvest ? '#F15223' : 'gray'}
                         size='xs'
                         style={{ width: '100%', borderColor: '', backgroundColor: '#1f1f1f' }}
-                        disabled={isEnableHarvest}
+                        disabled={!isEnableHarvest}
                         onClick={() => handleHarvest()}
                     >
                         Harvest
@@ -743,7 +808,7 @@ export default function PoolCard({ pool }) {
                 )}
 
                 <div
-                    className='flex text-[#f15223] justify-center'
+                    className='flex text-[#f15223] justify-center cursor-pointer'
                     onClick={() => setisDetail(!isDetail)}
                 >
                     <span>{isDetail ? 'Hide' : 'Details'}</span>
@@ -758,7 +823,9 @@ export default function PoolCard({ pool }) {
                     <div className='flex flex-col '>
                         <div>Staked Liquidity:</div>
                         <div className='mt-2 text-end'>
-                            $ {pool.cakeStakedInUsdt && pool.cakeStakedInUsdt.toFixed(18)}
+                            ${' '}
+                            {pool.cakeStakedInUsdt &&
+                                toThousands(Math.floor(pool.cakeStakedInUsdt))}
                         </div>
                     </div>
                     <Group
@@ -785,12 +852,16 @@ export default function PoolCard({ pool }) {
             <MyModal
                 title={`Deposit ${pool.token1Symbol}-${pool.token0Symbol} LP token`}
                 isOpen={isShowConfirm}
-                closeFn={() => setisShowConfirm(false)}
+                closeFn={() => {
+                    setisShowConfirm(false)
+                    setamount('')
+                }}
             >
                 <div className='w-full flex justify-between items-center px-4 py-2 bg-[#1f1f1f] rounded-lg'>
                     <div>
                         <div className='mb-2 text-[#999] '>Amount</div>
                         <TextInput
+                            type='number'
                             variant='unstyled'
                             value={amount}
                             onChange={(e) => ChangeAmount(e)}
@@ -863,24 +934,6 @@ export default function PoolCard({ pool }) {
                     </div>
                 </div>
 
-                {/* <button
-                    disabled={!isAbleWithdraw}
-                    onClick={() => withdrawFn()}
-                    style={{
-                        background: isAbleWithdraw
-                            ? 'linear-gradient( 270deg, #FF5F14 0%, #B33BF6 44%, #455EFF 88%)'
-                            : '',
-                        borderRadius: '8px',
-                        border: isAbleWithdraw ? '' : '1px solid #777',
-                        width: '100%',
-                        cursor: isAbleWithdraw ? 'pointer' : 'not-allowed',
-                        color: isAbleWithdraw ? 'white' : '#777',
-                        height: '35px'
-                    }}
-                    className={`mt-4 rounded-xl  relative`}
-                >
-                    withdraw
-                </button> */}
                 {!isAbleWithdraw && (
                     <Button
                         style={{
@@ -1012,6 +1065,7 @@ export default function PoolCard({ pool }) {
                                     </div>
                                     <div className='bg-[#1f1f1f] rounded-lg mt-4 p-4 flex items-center'>
                                         <TextInput
+                                            type='number'
                                             variant='unstyled'
                                             value={slippage}
                                             onChange={(event) => changeSlippage(event.target.value)}
@@ -1032,6 +1086,7 @@ export default function PoolCard({ pool }) {
                                     </h2>
                                     <div className='bg-[#1f1f1f] rounded-lg mt-4 p-4 flex items-center justify-between'>
                                         <TextInput
+                                            type='number'
                                             variant='unstyled'
                                             value={currentMinutes}
                                             onChange={(event) => changeDeadLine(event.target.value)}

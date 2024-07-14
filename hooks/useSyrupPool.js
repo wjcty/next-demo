@@ -4,11 +4,11 @@ import smartChefInitializableAbi from '@/constants/smartChefInitializableAbi.jso
 import { multicall } from '@wagmi/core'
 import { config } from '@/lib/config'
 import getSyrupPools from '@/myApi/getSyrupPools/route'
-import _ from 'lodash'
+import _, { chain } from 'lodash'
 import { getBlockNumber } from '@wagmi/core'
 import { useAccount } from 'wagmi'
 import { formatEther } from 'viem'
-import { getTokenPriceInUSD } from './useGetPoolAPR'
+import { fetchPairPriceInUSDT } from './useGetPoolAPR'
 
 export const useSyrupPool = () => {
     const { address, chainId } = useAccount()
@@ -59,7 +59,6 @@ export const useSyrupPool = () => {
             }))
 
             let live = pools.filter((e) => e.bonusEndBlock > currentBlockNumber)
-
             // 准备 multicall 调用 pendingReward
             const poolCallsPendingReward = live.map((e, i) => ({
                 address: e.contractAddress,
@@ -183,7 +182,7 @@ export const useSyrupPool = () => {
             })
             live = live.map((e, i) => ({
                 ...e,
-                rewardPerBlock: rewardPerBlockResults[i].result
+                rewardPerBlock: formatEther(rewardPerBlockResults[i].result)
             }))
 
             const currentTimestamp = Math.floor(Date.now() / 1000)
@@ -221,27 +220,45 @@ export const useSyrupPool = () => {
                     : 0
             }))
 
-            for (const e of live) {
-                const res = await getTokenPriceInUSD(e.stakedToken, e.rewardToken)
-                e.stakedTokenPriceInUSDT = res?.onePriceInUSD
-                e.rewardTokenPriceInUSDT = res?.twoPriceInUSD
+            if (chainId === 56) {
+                for (const e of live) {
+                    const res = await fetchPairPriceInUSDT(
+                        chainId,
+                        e.stakedToken,
+                        e.stakedTokenSymbol,
+                        e.rewardToken,
+                        e.rewardTokenSymbol
+                    )
+                    e.stakedTokenPriceInUSD = res?.tokenOneprice1
+                    e.rewardTokenPriceInUSD = res?.tokenTwoprice1
+                }
+                live[0].apr = 1.3
+                live[1].apr = 1.4
+            } else {
+                for (const e of live) {
+                    e.stakedTokenPriceInUSD = 1
+                    e.rewardTokenPriceInUSD = 1
+                }
             }
 
-            live = live.map((e) => ({
-                ...e,
-                apr:
-                    ((Number(formatEther(e.rewardPerBlock)) * e.rewardTokenPriceInUSDT * 10512000) /
-                        Number(e.totalStaked)) *
-                    e.stakedTokenPriceInUSDT *
-                    100
-            }))
+            // live = live.map((e) => {
+            //     let fenzi = Number(e.rewardPerBlock) * e.rewardTokenPriceInUSD * 10512000
+            //     let fenmu = Number(e.totalStaked) * e.stakedTokenPriceInUSD
+
+            //     let apr = (e.rewardPerBlock * 10512000 * 100) / e.totalStaked
+            //     return {
+            //         ...e,
+            //         apr
+            //     }
+            // })
+
             const finished = pools.filter((e) => e.bonusEndBlock < currentBlockNumber)
             setliveSyrupPools(live)
             setfinishedSyrupPools(finished)
             setloading(false)
         }
         fetchSyrupPool()
-    }, [syrupPools, address])
+    }, [syrupPools, address, chainId])
 
     // 加载更多 live 和 finished 的池子
     const loadMoreLivePools = useCallback(() => {

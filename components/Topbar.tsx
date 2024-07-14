@@ -45,13 +45,13 @@ const Topbar = () => {
                     width={30}
                     height={30}
                 />
-                <div className='pr-6 border-r-2 border-r-[#444]'>
-                    <MyConnectBtn />
-                </div>
-                <div className='p-2 cursor-pointer'>
+                <MyConnectBtn />
+                {/* <div className='pr-6 border-r-2 border-r-[#444]'>
+                </div> */}
+                {/* <div className='p-2 cursor-pointer'>
                     <MoonIcon className='h-6 w-6 text-[#888]' />
                 </div>
-                <GlobeIcon className='h-6 w-6' />
+                <GlobeIcon className='h-6 w-6' /> */}
             </div>
         </header>
     )

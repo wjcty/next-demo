@@ -2,11 +2,13 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import tokenList from '@/constants/tokenList.json'
+import bnbTestToken from '@/constants/bnbTestToken.json'
 import { Button, Image, Modal, TextInput } from '@mantine/core'
 import { IconChevronDown, IconPlus, IconXboxX } from '@tabler/icons-react'
 import { useDisclosure } from '@mantine/hooks'
 import style from './page.module.css'
-import { useAccount, useBalance, useReadContract, useWriteContract } from 'wagmi'
+import { BaseError, useAccount, useBalance, useReadContract } from 'wagmi'
+import { writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import bep20Abi from '@/constants/bep20Abi.json'
 import pairAbi from '@/constants/pairAbi.json'
 import cakev2FactoryAbi from '@/constants/cakev2FactoryAbi.json'
@@ -15,33 +17,30 @@ import MyModal from '@/components/myModal/page'
 import MyButton from '@/components/myButton/page'
 import { formatEther, parseEther } from 'viem'
 import { useLiquidityStore } from '@/store/liquidity'
+import { config } from '@/lib/config'
 
-// const PANCAKE_SWAP_V2_ROUTER_ADDRESS = '0x10ED43C718714eb63d5aA57B78B54704E256024E'
-// const PANCAKE_SWAP_V2_FACTORY_ADDRESS = '0xca143ce32fe78f1f7019d7d551a6402fc5350c73'
-
-//testnet
-// const PANCAKE_SWAP_V2_ROUTER_ADDRESS = '0xB6BA90af76D139AB3170c7df0139636dB6120F7e'
-// const PANCAKE_SWAP_V2_FACTORY_ADDRESS = '0x6725F303b657a9451d8BA641348b6761A6CC7a17'
-
-// type TObject = {
-//     ticker: string
-//     img: string
-//     address: string
-// }
 export default function Page() {
     const { address, chainId } = useAccount()
 
-    const PANCAKE_SWAP_V2_ROUTER_ADDRESS =
-        chainId === 56
-            ? '0x10ED43C718714eb63d5aA57B78B54704E256024E'
-            : '0xB6BA90af76D139AB3170c7df0139636dB6120F7e'
-    const PANCAKE_SWAP_V2_FACTORY_ADDRESS =
-        chainId === 56
-            ? '0xca143ce32fe78f1f7019d7d551a6402fc5350c73'
-            : '0x6725F303b657a9451d8BA641348b6761A6CC7a17'
+    const [PANCAKE_SWAP_V2_ROUTER_ADDRESS, setPANCAKE_SWAP_V2_ROUTER_ADDRESS] = useState('')
+    const [PANCAKE_SWAP_V2_FACTORY_ADDRESS, setPANCAKE_SWAP_V2_FACTORY_ADDRESS] = useState('')
 
-    const [tokenOne, setTokenOne] = useState({ ticker: '', img: '', address: '' })
-    const [tokenTwo, setTokenTwo] = useState({ ticker: '', img: '', address: '' })
+    useEffect(() => {
+        setPANCAKE_SWAP_V2_ROUTER_ADDRESS(
+            chainId === 56
+                ? '0x10ED43C718714eb63d5aA57B78B54704E256024E'
+                : '0xB6BA90af76D139AB3170c7df0139636dB6120F7e'
+        )
+
+        setPANCAKE_SWAP_V2_FACTORY_ADDRESS(
+            chainId === 56
+                ? '0xca143ce32fe78f1f7019d7d551a6402fc5350c73'
+                : '0x6725F303b657a9451d8BA641348b6761A6CC7a17'
+        )
+    }, [chainId])
+
+    const [tokenOne, setTokenOne] = useState(chainId === 56 ? tokenList[0] : bnbTestToken[0])
+    const [tokenTwo, setTokenTwo] = useState(chainId === 56 ? tokenList[1] : bnbTestToken[1])
     const [tokenOneAmount, setTokenOneAmount] = useState('')
     const [tokenTwoAmount, setTokenTwoAmount] = useState('')
     const [tokenOneBalance, settokenOneBalance] = useState(0)
@@ -54,20 +53,27 @@ export default function Page() {
 
     const [isShowAdd, setisShowAdd] = useState(false)
 
+    const [isTxDetailOpen, setisTxDetailOpen] = useState(false)
+    const [isTxDetailErrorOpen, setisTxDetailErrorOpen] = useState(false)
+    const [txDetailError, settxDetailError] = useState('')
+    const [liquidityHash, setliquidityHash] = useState('')
+
     const { liquidity } = useLiquidityStore()
-    function openModal(asset) {
+    function openModal(asset: number) {
         setChangeToken(asset)
         open()
     }
 
-    function modifyToken(i) {
+    function modifyToken(i: number) {
         setTokenOneAmount('')
         setTokenTwoAmount('')
-        changeToken === 1 ? setTokenOne(tokenList[i]) : setTokenTwo(tokenList[i])
+        changeToken === 1
+            ? setTokenOne(chainId === 56 ? tokenList[i] : bnbTestToken[i])
+            : setTokenTwo(chainId === 56 ? tokenList[i] : bnbTestToken[i])
         close()
     }
     const isSelected = useMemo(
-        () => (ticker) => {
+        () => (ticker: string) => {
             return ticker === tokenOne.ticker || ticker === tokenTwo.ticker
         },
         [tokenOne, tokenTwo]
@@ -83,21 +89,27 @@ export default function Page() {
         setisShowAdd(true)
     }
 
-    function ChangeAmount(e) {
-        setTokenOneAmount(e.target.value)
-        if (e.target.value && prices) {
-            const value = parseFloat(e.target.value) * prices
-            setTokenTwoAmount(value.toFixed(6))
+    function ChangeAmount(e: any) {
+        const target = e.target as HTMLInputElement
+        let value = target.value
+        let numberValue = parseFloat(value)
+        setTokenOneAmount(value)
+        if (value && prices) {
+            const amount = numberValue * prices
+            setTokenTwoAmount(amount.toString())
         } else {
             setTokenTwoAmount('')
         }
     }
 
-    const ChangeTwoAmount = (e) => {
-        setTokenTwoAmount(e.target.value)
-        if (e.target.value && prices) {
-            const value = parseFloat(e.target.value) * prices
-            setTokenOneAmount(value.toFixed(6))
+    const ChangeTwoAmount = (e: any) => {
+        const target = e.target as HTMLInputElement
+        let value = target.value
+        let numberValue = parseFloat(value)
+        setTokenTwoAmount(value)
+        if (value && switchPrices) {
+            const amount = numberValue * switchPrices
+            setTokenOneAmount(amount.toString())
         } else {
             setTokenOneAmount('')
         }
@@ -106,7 +118,7 @@ export default function Page() {
     //  读取用户address 在 tokenOne 的余额
     const { data: tokenResultOne, isSuccess: isGetOneBalanceSuccess } = useBalance({
         address,
-        token: tokenOne.address
+        token: tokenOne.address as `0x${string}`
     })
 
     useEffect(() => {
@@ -124,7 +136,7 @@ export default function Page() {
     //  读取用户address 在 tokenTwo 的余额
     const { data: tokenResultTwo, isSuccess: isGetTwoBalanceSuccess } = useBalance({
         address,
-        token: tokenTwo.address
+        token: tokenTwo.address as `0x${string}`
     })
 
     useEffect(() => {
@@ -142,93 +154,87 @@ export default function Page() {
     // pancakeswap v2factory 获取 交易对的流动性池地址
     const [pairAddress, setPairAddress] = useState('')
 
-    const {
-        data: pairAddressData,
-        isLoading: pairLoading,
-        error: pairError
-    } = useReadContract({
-        address: PANCAKE_SWAP_V2_FACTORY_ADDRESS,
+    const { data: pairAddressData } = useReadContract({
+        address: PANCAKE_SWAP_V2_FACTORY_ADDRESS as `0x${string}`,
         abi: cakev2FactoryAbi,
         functionName: 'getPair',
         args: [tokenOne.address, tokenTwo.address],
         // 必须设置不然会一直请求
+        // @ts-ignore
         enabled: !!tokenOne.address && !!tokenTwo.address
     })
 
     // 当 pairAddressData 更新时，设置 pairAddress
     useEffect(() => {
         if (pairAddressData) {
-            setPairAddress(pairAddressData)
+            setPairAddress(pairAddressData as string)
         }
     }, [tokenOne.address, tokenTwo.address, pairAddressData])
 
     // 获取用户 LP的 余额
     const [lpTokenBalance, setlpTokenBalance] = useState('')
-    const {
-        data: lpTokenBalanceData,
-        isSuccess: isSuccessLpTokenBalance,
-        isError: isErrorLpTokenBalance
-    } = useReadContract({
-        address: pairAddress,
+    const { data: lpTokenBalanceData, isSuccess: isSuccessLpTokenBalance } = useReadContract({
+        address: pairAddress as `0x${string}`,
         abi: pairAbi,
         functionName: 'balanceOf',
         args: [address],
+        // @ts-ignore
         enabled: !!pairAddress
     })
 
     useEffect(() => {
         if (isSuccessLpTokenBalance) {
-            setlpTokenBalance(formatEther(lpTokenBalanceData))
+            setlpTokenBalance(formatEther(lpTokenBalanceData as bigint))
         }
     }, [isSuccessLpTokenBalance, lpTokenBalanceData])
 
     // 获取流动性池中 token0  的地址
-    const {
-        data: token0Data,
-        isLoading: token0Loading,
-        error: token0Error
-    } = useReadContract({
-        address: pairAddress,
+    const { data: token0Data } = useReadContract({
+        address: pairAddress as `0x${string}`,
         abi: pairAbi,
         functionName: 'token0',
+        // @ts-ignore
         enabled: !!pairAddress
-    })
+    }) as {
+        data: string
+    }
 
     // 获取流动性池的储备数据
-    const {
-        data: pairReservesData,
-        isLoading: pairReservesLoading,
-        error: pairReservesError
-    } = useReadContract({
-        address: pairAddress,
+    const { data: pairReservesData } = useReadContract({
+        address: pairAddress as `0x${string}`,
         abi: pairAbi,
         functionName: 'getReserves',
+        // @ts-ignore
         enabled: !!pairAddress // 确保在有 pairAddress 时才进行查询
-    })
+    }) as {
+        data: bigint[]
+        isLoading: Boolean
+        error: Error
+    }
 
     // 计算价格并更新
     useEffect(() => {
         if (pairReservesData) {
-            const reserve0 = parseInt(pairReservesData[0]) // reserve0 对应 token0
-            const reserve1 = parseInt(pairReservesData[1]) // reserve1 对应 token1
+            const reserve0 = parseInt(pairReservesData[0].toString()) // reserve0 对应 token0
+            const reserve1 = parseInt(pairReservesData[1].toString()) // reserve1 对应 token1
 
             // price == a/b
-            // Price2 = b/a
-            let price, price2
+            // price2 = b/a
+            let price: any, price2: any
             const token0 = token0Data.toUpperCase()
 
-            if (token0 === tokenOne.address.toUpperCase()) {
+            if (tokenOne.address && token0 === tokenOne.address.toUpperCase()) {
                 price = reserve1 / reserve0
                 price2 = reserve0 / reserve1
 
-                setPrices(parseFloat(price.toFixed(6)))
-                setswitchPrices(parseFloat(price2.toFixed(6)))
-            } else if (token0 === tokenTwo.address.toUpperCase()) {
+                setPrices(price.toFixed(6))
+                setswitchPrices(price2.toFixed(6))
+            } else if (tokenTwo.address && token0 === tokenTwo.address.toUpperCase()) {
                 price = reserve0 / reserve1
                 price2 = reserve1 / reserve0
 
-                setPrices(parseFloat(price.toFixed(6)))
-                setswitchPrices(parseFloat(price2.toFixed(6)))
+                setPrices(price.toFixed(6))
+                setswitchPrices(price2.toFixed(6))
             } else {
                 setPrices(0)
                 setswitchPrices(0)
@@ -242,7 +248,7 @@ export default function Page() {
         // 假如是原生代币 这里设置最大值需要减去gas费
         if (tokenOneBalance && prices) {
             const value = tokenOneBalance * prices
-            setTokenTwoAmount(value.toFixed(6))
+            setTokenTwoAmount(value.toString())
         } else {
             setTokenTwoAmount('')
         }
@@ -254,7 +260,7 @@ export default function Page() {
         // 假如是原生代币 这里设置最大值需要减去gas费
         if (tokenOneBalance && switchPrices) {
             const value = tokenOneBalance * switchPrices
-            setTokenOneAmount(value.toFixed(6))
+            setTokenOneAmount(value.toString())
         } else {
             setTokenOneAmount('')
         }
@@ -268,18 +274,46 @@ export default function Page() {
             tokenTwoBalance < parseFloat(tokenTwoAmount)
         )
     }, [tokenOneBalance, tokenTwoBalance, tokenOneAmount, tokenTwoAmount])
-    // }, [])
+
+    const getSupplyText = useMemo(() => {
+        let oneAmount = Number(tokenOneAmount)
+        let twoAmount = Number(tokenTwoAmount)
+        if (oneAmount === 0 && twoAmount === 0) {
+            return `enter an amount`
+        }
+        if (tokenOneBalance < oneAmount && tokenTwoBalance > twoAmount)
+            return `${tokenOne.ticker} Insufficient  Balance`
+
+        if (tokenTwoBalance < twoAmount && tokenOneBalance > oneAmount)
+            return `${tokenTwo.ticker} Insufficient  Balance`
+        if (tokenOneBalance < oneAmount && tokenTwoBalance < twoAmount) {
+            return `Insufficient  Balance`
+        }
+
+        return 'Supply'
+    }, [
+        tokenOneAmount,
+        tokenTwoAmount,
+        tokenTwoBalance,
+        tokenOneBalance,
+        tokenOne.ticker,
+        tokenTwo.ticker
+    ])
 
     // 点击supply后 控制弹窗显示
     const [isShowConfirm, setisShowConfirm] = useState(false)
 
     // 获取总的LP数量
     const { data: totalSupplyLP, isSuccess: isSuccessLP } = useReadContract({
-        address: pairAddress,
+        address: pairAddress as `0x${string}`,
         abi: pairAbi,
         functionName: 'totalSupply',
+        // @ts-ignore
         enabled: !!isShowConfirm //  打开confirm 弹窗时才进行查询
-    })
+    }) as {
+        data: bigint
+        isSuccess: Boolean
+    }
 
     const [lpReceive, setLpReceive] = useState('0')
     const [userShare, setUserShare] = useState('0')
@@ -303,7 +337,8 @@ export default function Page() {
 
             // 计算用户在池子中的比例
             const calculatedUserShare =
-                (minCalculatedLP * parseEther('100')) / (totalSupplyLP + minCalculatedLP)
+                (minCalculatedLP * parseEther('100')) /
+                ((totalSupplyLP as bigint) + minCalculatedLP)
             let val = formatEther(calculatedUserShare)
             val = Number(val).toFixed(6)
             setUserShare(val)
@@ -317,38 +352,57 @@ export default function Page() {
     // 控制弹窗内的Confirm supply按钮loading
     const [confirmLoading, setconfirmLoading] = useState(false)
 
-    // 授权 token 给pancakeswap v2 router
-    const {
-        writeContract: writeForApprove1,
-        isSuccess: approveSuccess1,
-        isError: isApproveError1
-    } = useWriteContract()
-    const {
-        writeContract: writeForApprove2,
-        isSuccess: approveSuccess2,
-        isError: isApproveError2
-    } = useWriteContract()
+    // 点击弹窗内的Confirm supply按钮
+    const handleConfirmSupply = async () => {
+        setconfirmLoading(true)
+        let approve1Receipt, approve2Receipt
+        try {
+            const res = await writeContract(config, {
+                address: tokenOne.address as `0x${string}`,
+                abi: bep20Abi,
+                functionName: 'approve',
+                args: [PANCAKE_SWAP_V2_ROUTER_ADDRESS, parseEther(tokenOneAmount)]
+            })
 
-    // 使用 BigNumber 进行滑点计算，避免浮点数操作
-    const slippageFactor = parseEther((1 - Number(liquidity.slippage) / 100).toString()) // 滑点比例
-    const intputTokenOneAmount = parseEther(tokenOneAmount)
-    const intputTokenTwoAmount = parseEther(tokenTwoAmount)
-    const minTokenOneAmount = (intputTokenOneAmount * slippageFactor) / parseEther('1')
-    const minTokenTwoAmount = (intputTokenTwoAmount * slippageFactor) / parseEther('1')
+            approve1Receipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
+        } catch (error) {
+            setconfirmLoading(false)
+            return
+        }
 
-    const {
-        writeContract: writeForAddLiquidity,
-        data: addLiquidityData,
-        isSuccess: isSuccessAddLiquidity,
-        isError: isErrorAddLiquidity,
-        error: addLiquidityError
-    } = useWriteContract()
-    useEffect(() => {
-        // 两个token 授权后才能进行添加流动性
-        if (approveSuccess1 && approveSuccess2) {
-            console.log(11111)
-            writeForAddLiquidity({
-                address: PANCAKE_SWAP_V2_ROUTER_ADDRESS,
+        try {
+            const res = await writeContract(config, {
+                address: tokenTwo.address as `0x${string}`,
+                abi: bep20Abi,
+                functionName: 'approve',
+                args: [PANCAKE_SWAP_V2_ROUTER_ADDRESS, parseEther(tokenTwoAmount)]
+            })
+            approve2Receipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
+        } catch (error) {
+            setconfirmLoading(false)
+            return
+        }
+
+        if (approve1Receipt?.status === 'success' && approve2Receipt?.status) {
+            handleAddLiquidityAfterApprove()
+        }
+    }
+
+    const handleAddLiquidityAfterApprove = async () => {
+        let txReceipt
+        // 使用 BigNumber 进行滑点计算，避免浮点数操作
+        const slippageFactor = parseEther((1 - Number(liquidity.slippage) / 100).toString()) // 滑点比例
+        const intputTokenOneAmount = parseEther(tokenOneAmount)
+        const intputTokenTwoAmount = parseEther(tokenTwoAmount)
+        const minTokenOneAmount = (intputTokenOneAmount * slippageFactor) / parseEther('1')
+        const minTokenTwoAmount = (intputTokenTwoAmount * slippageFactor) / parseEther('1')
+        try {
+            const res = await writeContract(config, {
+                address: PANCAKE_SWAP_V2_ROUTER_ADDRESS as `0x${string}`,
                 abi: cakeV2RouterAbi,
                 functionName: 'addLiquidity',
                 args: [
@@ -359,54 +413,29 @@ export default function Page() {
                     minTokenOneAmount,
                     minTokenTwoAmount,
                     address,
-                    liquidity.txDeadline
+                    Math.floor(Date.now() / 1000) + 60 * Number(liquidity.currentMinutes)
                 ]
-                // enabled: !!isApprovaAll
             })
-        } else if (isApproveError1 && isApproveError2) {
-            setconfirmLoading(false)
-        }
-    }, [approveSuccess1, approveSuccess2, isApproveError1, isApproveError2])
 
-    // 点击弹窗内的Confirm supply按钮
-    const handleConfirmSupply = () => {
-        setconfirmLoading(true)
-        // 授权后 才能 confirm 交易
-        writeForApprove1({
-            address: tokenOne.address,
-            abi: bep20Abi,
-            functionName: 'approve',
-            args: [PANCAKE_SWAP_V2_ROUTER_ADDRESS, parseEther(tokenOneAmount)]
-        })
-        writeForApprove2({
-            address: tokenTwo.address,
-            abi: bep20Abi,
-            functionName: 'approve',
-            args: [PANCAKE_SWAP_V2_ROUTER_ADDRESS, parseEther(tokenTwoAmount)]
-        })
-    }
+            txReceipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
 
-    useEffect(() => {
-        if (isSuccessAddLiquidity) {
-            setisShowConfirm(false)
-            setconfirmLoading(false)
-            setisTxDetailOpen(true)
-            setliquidityHash(addLiquidityData)
-        }
-    }, [isSuccessAddLiquidity, addLiquidityData])
-
-    useEffect(() => {
-        if (isErrorAddLiquidity) {
+            if (txReceipt.status === 'success') {
+                setTokenOneAmount('')
+                setTokenTwoAmount('')
+                setisShowConfirm(false)
+                setconfirmLoading(false)
+                setisTxDetailOpen(true)
+                setliquidityHash(res)
+            }
+        } catch (error) {
             setisShowConfirm(false)
             setconfirmLoading(false)
             setisTxDetailErrorOpen(true)
-            console.log(123, addLiquidityError)
+            settxDetailError((error as BaseError).shortMessage)
         }
-    }, [isErrorAddLiquidity, addLiquidityError])
-
-    const [isTxDetailOpen, setisTxDetailOpen] = useState(false)
-    const [isTxDetailErrorOpen, setisTxDetailErrorOpen] = useState(false)
-    const [liquidityHash, setliquidityHash] = useState('')
+    }
 
     return (
         <div className=' bg-black flex justify-center'>
@@ -488,6 +517,7 @@ export default function Page() {
                             <div>
                                 <div className='mb-2'>Amount</div>
                                 <TextInput
+                                    type='number'
                                     variant='unstyled'
                                     value={tokenOneAmount}
                                     onChange={(e) => ChangeAmount(e)}
@@ -526,6 +556,7 @@ export default function Page() {
                             <div>
                                 <div className='mb-2'>Amount</div>
                                 <TextInput
+                                    type='number'
                                     variant='unstyled'
                                     value={tokenTwoAmount}
                                     onChange={(e) => ChangeTwoAmount(e)}
@@ -588,13 +619,14 @@ export default function Page() {
                                     background: !isSupplyDisable
                                         ? 'linear-gradient( 270deg, #FF5F14 0%, #B33BF6 44%, #455EFF 88%)'
                                         : '#1f1f1f',
-                                    color: 'white'
+                                    color: 'white',
+                                    cursor: isSupplyDisable ? 'not-allowed' : 'pointer'
                                 }}
                                 disabled={isSupplyDisable}
                                 className='my-8 w-full px-4 py-2 rounded-xl'
                                 onClick={() => handleSupply()}
                             >
-                                {!isSupplyDisable ? 'Supply' : `Insufficient Balance`}
+                                <span>{getSupplyText}</span>
                             </button>
 
                             <div className='my-4'>LP Token in your wallet</div>
@@ -629,43 +661,82 @@ export default function Page() {
 
             <Modal className={style.modal} opened={opened} onClose={close} title='Select a token'>
                 <div className={style.modalContent}>
-                    {tokenList?.map((e, i) => {
-                        return (
-                            <div
-                                className={
-                                    !isSelected(e.ticker)
-                                        ? style.tokenChoice
-                                        : style.selected_tokenChoice
-                                }
-                                key={i}
-                                onClick={() => {
-                                    if (!isSelected(e.ticker)) modifyToken(i)
-                                }}
-                            >
-                                <Image src={e.img} alt={e.ticker} className={style.tokenLogo} />
-                                <div>
-                                    <div
-                                        className={
-                                            !isSelected(e.ticker)
-                                                ? style.tokenName
-                                                : style.selected_tokenName
-                                        }
-                                    >
-                                        {e.name}
-                                    </div>
-                                    <div
-                                        className={
-                                            !isSelected(e.ticker)
-                                                ? style.tokenTicker
-                                                : style.selected_tokenTicker
-                                        }
-                                    >
-                                        {e.ticker}
+                    {chainId === 56 &&
+                        tokenList?.map((e, i) => {
+                            return (
+                                <div
+                                    className={
+                                        !isSelected(e.ticker)
+                                            ? style.tokenChoice
+                                            : style.selected_tokenChoice
+                                    }
+                                    key={i}
+                                    onClick={() => {
+                                        if (!isSelected(e.ticker)) modifyToken(i)
+                                    }}
+                                >
+                                    <Image src={e.img} alt={e.ticker} className={style.tokenLogo} />
+                                    <div>
+                                        <div
+                                            className={
+                                                !isSelected(e.ticker)
+                                                    ? style.tokenName
+                                                    : style.selected_tokenName
+                                            }
+                                        >
+                                            {e.name}
+                                        </div>
+                                        <div
+                                            className={
+                                                !isSelected(e.ticker)
+                                                    ? style.tokenTicker
+                                                    : style.selected_tokenTicker
+                                            }
+                                        >
+                                            {e.ticker}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )
-                    })}
+                            )
+                        })}
+                    {chainId === 97 &&
+                        bnbTestToken?.map((e, i) => {
+                            return (
+                                <div
+                                    className={
+                                        !isSelected(e.ticker)
+                                            ? style.tokenChoice
+                                            : style.selected_tokenChoice
+                                    }
+                                    key={i}
+                                    onClick={() => {
+                                        if (!isSelected(e.ticker)) modifyToken(i)
+                                    }}
+                                >
+                                    <Image src={e.img} alt={e.ticker} className={style.tokenLogo} />
+                                    <div>
+                                        <div
+                                            className={
+                                                !isSelected(e.ticker)
+                                                    ? style.tokenName
+                                                    : style.selected_tokenName
+                                            }
+                                        >
+                                            {e.name}
+                                        </div>
+                                        <div
+                                            className={
+                                                !isSelected(e.ticker)
+                                                    ? style.tokenTicker
+                                                    : style.selected_tokenTicker
+                                            }
+                                        >
+                                            {e.ticker}
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
                 </div>
             </Modal>
 
@@ -775,7 +846,9 @@ export default function Page() {
                         variant='transparent'
                         onClick={() => {
                             setisTxDetailOpen(false)
-                            window.open(`https://bscscan.com/tx/${liquidityHash}`)
+                            chainId === 56
+                                ? window.open(`https://bscscan.com/tx/${liquidityHash}`)
+                                : window.open(`https://testnet.bscscan.com/tx/${liquidityHash}`)
                         }}
                         color='#F15223'
                         className='mt-4'
@@ -799,8 +872,7 @@ export default function Page() {
                         color='#F15223'
                         className='mt-4'
                     >
-                        {/* {addLiquidityError} */}
-                        ffff
+                        {txDetailError}
                     </div>
                 </div>
             </MyModal>

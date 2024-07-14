@@ -6,7 +6,7 @@ import { formatEther, formatUnits } from 'viem'
 import masterchefv2Abi from '@/constants/masterchefv2Abi.json'
 import bep20Abi from '@/constants/bep20Abi.json'
 import chainlinkFeedAbi from '@/constants/chainlinkFeedAbi.json'
-import { getTokenArrPricesInUSD, fetchTokenPriceInUSDT } from './useGetPoolAPR'
+import { fetchPairPriceInUSDT } from './useGetPoolAPR'
 import { config } from '@/lib/config'
 
 export const usePancakeSwapPools = () => {
@@ -47,81 +47,36 @@ export const usePancakeSwapPools = () => {
         functionName: 'poolLength'
     })
 
-    const masterChefV2ContractConfig = {
-        address: masterChefV2Address,
-        abi: masterchefv2Abi
-    }
     // 计算 regular 的 cakePerBlock
-    // const { data, isSuccess } = useReadContract([
-    //     {
-    //         ...masterChefV2ContractConfig,
-    //         functionName: 'cakePerBlock',
-    //         args: [true]
-    //     },
-    //     {
-    //         ...masterChefV2ContractConfig,
-    //         functionName: 'cakePerBlock',
-    //         args: [false]
-    //     },
-    //     {
-    //         ...masterChefV2ContractConfig,
-    //         functionName: 'totalRegularAllocPoint'
-    //     },
-    //     {
-    //         ...masterChefV2ContractConfig,
-    //         functionName: 'totalSpecialAllocPoint'
-    //     },
-    //     {
-    //         address: chainlink_cake_usd_address,
-    //         abi: chainlinkFeedAbi,
-    //         functionName: 'latestAnswer'
-    //     }
-    // ])
-
-    // const [
-    //     isRegularData,
-    //     notRegularData,
-    //     regularAllocPointData,
-    //     notRegularAllocPointData,
-    //     cakePriceData
-    // ] = data || []
-
-    // useEffect(() => {
-    //     if (isSuccess) {
-    //         setCakePrice(cakePriceData)
-    //         setisRegularCakePerBlock(isRegularData)
-    //         setnotRegularCakePerBlock(notRegularData)
-    //         settotalRegularAllocPoint(regularAllocPointData)
-    //         settotalNotRegularAllocPoint(notRegularAllocPointData)
-    //     }
-    // }, [isSuccess])
-
-    // // 计算 regular 的 cakePerBlock
     const { data: isRegularData, isSuccess: isRegularSuccess } = useReadContract({
-        ...masterChefV2ContractConfig,
+        address: masterChefV2Address,
+        abi: masterchefv2Abi,
         functionName: 'cakePerBlock',
-        args: [false]
+        args: [true]
     })
-
-    // // 计算 非 regular 的 cakePerBlock
+    // 计算 非 regular 的 cakePerBlock
     const { data: notRegularData, isSuccess: notRegularSuccess } = useReadContract({
-        ...masterChefV2ContractConfig,
+        address: masterChefV2Address,
+        abi: masterchefv2Abi,
         functionName: 'cakePerBlock',
         args: [false]
     })
 
-    // // 计算 regular 的 AllocPoint
+    // 计算 regular 的 AllocPoint
     const { data: regularAllocPointData, isSuccess: isRegularAllocPointSuccess } = useReadContract({
-        ...masterChefV2ContractConfig,
+        address: masterChefV2Address,
+        abi: masterchefv2Abi,
         functionName: 'totalRegularAllocPoint'
     })
-    // // 计算 非 regular 的 AllocPoint
+    // 计算 非 regular 的 AllocPoint
     const { data: notRegularAllocPointData, isSuccess: notRegularAllocPointSuccess } =
         useReadContract({
-            ...masterChefV2ContractConfig,
+            address: masterChefV2Address,
+            abi: masterchefv2Abi,
             functionName: 'totalSpecialAllocPoint'
         })
-    // // 获取 CAKE 的价格
+
+    // 获取 CAKE 的价格
     const { data: cakePriceData, isSuccess: isCakePriceSuccess } = useReadContract({
         address: chainlink_cake_usd_address,
         abi: chainlinkFeedAbi,
@@ -164,7 +119,6 @@ export const usePancakeSwapPools = () => {
             isRegularCakePerBlock &&
             notRegularCakePerBlock &&
             isCakePriceSuccess &&
-            // isSuccess &&
             address
         ) {
             const fetchPools = async () => {
@@ -389,22 +343,19 @@ export const usePancakeSwapPools = () => {
                     }
                 })
 
-                const addressesToFetch = updatedArrayA.reduce((addresses, e) => {
+                for (const e of updatedArrayA) {
                     if (e.token0 && e.token1) {
-                        addresses.push(e.token0, e.token1)
+                        const res = await fetchPairPriceInUSDT(
+                            chainId,
+                            e.token0,
+                            e.token0Symbol,
+                            e.token1,
+                            e.token1Symbol
+                        )
+                        e.price0 = res?.tokenOneprice1
+                        e.price1 = res?.tokenTwoprice1
                     }
-                    return addresses
-                }, [])
-
-                const prices = await getTokenArrPricesInUSD(addressesToFetch)
-
-                updatedArrayA.forEach((e) => {
-                    if (e.token0 && e.token1) {
-                        e.price0 = prices[e.token0]
-                        e.price1 = prices[e.token1]
-                    }
-                })
-
+                }
                 updatedArrayA = updatedArrayA.map((e, i) => {
                     const tempResult = results5[i].result
                     return {
@@ -414,37 +365,25 @@ export const usePancakeSwapPools = () => {
                     }
                 })
 
-                // const lpTokenAddressesToFetch = updatedArrayA.reduce((addresses, e) => {
-                //     addresses.push(e.lpTokenAddress)
-                //     return addresses
-                // }, [])
-
-                // const lpTokenPrices = await getTokenArrPricesInUSD(lpTokenAddressesToFetch)
-                // updatedArrayA.forEach((e) => {
-                //     e.lpTokenPrice = lpTokenPrices[e.lpTokenAddress]
-                // })
-                for (const e of updatedArrayA) {
-                    const res = await fetchTokenPriceInUSDT(
-                        chainId,
-                        e.lpTokenAddress,
-                        e.lpTokenSymbol
-                    )
-                    console.log(res)
-                    e.lpTokenPrice = res ? res.tokenPrice1 : 0
-                }
-
-                // console.log(22, lpTokenPrices)
-
                 updatedArrayA = updatedArrayA.map((e, i) => {
-                    let fenzi =
-                        Number(formatEther(e.poolCakePerBlock)) *
-                        10512000 *
-                        Number(formatUnits(cakePrice, 8))
-
-                    let fenmu = Number(e.totalStaked) * e.lpTokenPrice
                     return {
                         ...e,
-                        apr: e.lpTokenPrice ? fenzi / fenmu : 0
+                        lpTokenPrice:
+                            e.price0 && e.price1 && e.reserve0 && e.reserve1
+                                ? e.price0 * e.reserve0 +
+                                  (e.price1 * e.reserve1) / Number(formatEther(e.totalSupply))
+                                : 0
+                    }
+                })
+                updatedArrayA = updatedArrayA.map((e, i) => {
+                    return {
+                        ...e,
+                        apr: e.lpTokenPrice
+                            ? (Number(formatEther(e.poolCakePerBlock)) *
+                                  10512000 *
+                                  Number(formatUnits(cakePrice, 8))) /
+                              (Number(e.totalStaked) * e.lpTokenPrice)
+                            : 0
                     }
                 })
 
@@ -527,12 +466,12 @@ export const usePancakeSwapPools = () => {
             fetchPools()
         }
     }, [
-        // isSuccess,
-        address,
         isRegularAllocPointSuccess,
         notRegularAllocPointSuccess,
         isRegularCakePerBlock,
-        notRegularCakePerBlock
+        notRegularCakePerBlock,
+        address,
+        chainId
     ])
 
     // 加载更多 live 和 finished 的池子

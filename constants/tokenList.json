@@ -5,8 +5,6 @@
         "ids": "wbnb",
         "img": "https://coin-images.coingecko.com/coins/images/12591/large/binance-coin-logo.png?1696512401",
         "name": "Wrapped BNB",
-        "derivedBNB": "1",
-        "derivedUSD": "572.3457196366796945665047941868706",
         "decimals": "18",
         "totalLiquidity": "840290.726378129831005093"
     },
@@ -16,8 +14,6 @@
         "img": "https://coin-images.coingecko.com/coins/images/325/large/Tether.png?1696501661",
         "ticker": "USDT",
         "name": "Tether USD",
-        "derivedBNB": "0.001744607222827835188895639119106893",
-        "derivedUSD": "0.9985184764327465381705196660432797",
         "decimals": "18",
         "totalLiquidity": "118056123.814705397168179838"
     },
@@ -26,8 +22,6 @@
         "img": "https://coin-images.coingecko.com/coins/images/12632/large/pancakeswap-cake-logo_%281%29.png?1696512440",
         "ticker": "CAKE",
         "name": "PancakeSwap Token",
-        "derivedBNB": "0.003769114215590628363904198432247203",
-        "derivedUSD": "2.156882084780599539982282181149945",
         "decimals": "18",
         "totalLiquidity": "13600158.092125808451849138"
     },
@@ -37,8 +31,6 @@
         "ids": "binance-bitcoin",
         "img": "https://coin-images.coingecko.com/coins/images/14108/large/Binance-bitcoin.png?1696513829",
         "name": "BTCB Token",
-        "derivedBNB": "106.6329481747981922916594386907922",
-        "derivedUSD": "61020.88777628610133545119695055422",
         "decimals": "18",
         "totalLiquidity": "87.808975747738782705"
     },
@@ -48,8 +40,6 @@
         "img": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
         "ticker": "USDC",
         "name": "USD Coin",
-        "derivedBNB": "0.001750566069682292054632361877421362",
-        "derivedUSD": "1.001764440648783014074006840686405",
         "decimals": "18",
         "totalLiquidity": "8519239.255970916542544727"
     },
@@ -59,8 +49,39 @@
         "ids": "ethereum",
         "img": "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628",
         "name": "Ethereum Token",
-        "derivedBNB": "5.924744280713156210102559816303818",
-        "derivedUSD": "3390.85951928376941070931868863463",
+        "decimals": "18",
+        "totalLiquidity": "3328.282923074690315554"
+    },
+
+    {
+        "address": "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
+        "ticker": "BUSD",
+        "img": "https://tokens.pancakeswap.finance/images/symbol/busd.png",
+        "name": "BUSD Token",
+        "decimals": "18",
+        "totalLiquidity": "3328.282923074690315554"
+    },
+    {
+        "address": "0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD",
+        "ticker": "LINK",
+        "img": "https://tokens.pancakeswap.finance/images/0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD.png",
+        "name": "ChainLink Token",
+        "decimals": "18",
+        "totalLiquidity": "3328.282923074690315554"
+    },
+    {
+        "address": "0x4B0F1812e5Df2A09796481Ff14017e6005508003",
+        "ticker": "TWT",
+        "img": "https://tokens.pancakeswap.finance/images/0x4B0F1812e5Df2A09796481Ff14017e6005508003.png",
+        "name": "Trust Wallet",
+        "decimals": "18",
+        "totalLiquidity": "3328.282923074690315554"
+    },
+    {
+        "address": "0xa1faa113cbE53436Df28FF0aEe54275c13B40975",
+        "ticker": "ALPHA",
+        "img": "https://tokens.pancakeswap.finance/images/0xa1faa113cbE53436Df28FF0aEe54275c13B40975.png",
+        "name": "ALPHA Token",
         "decimals": "18",
         "totalLiquidity": "3328.282923074690315554"
     },
@@ -142,14 +163,27 @@
         "decimals": "18",
         "totalLiquidity": "25205.985422650235427881"
     },
+
+    {
+        "address": "0x25d887Ce7a35172C62FeBFD67a1856F20FaEbB00",
+        "ticker": "PEPE",
+        "name": "PEPE Token",
+        "img": "https://tokens.pancakeswap.finance/images/0x25d887Ce7a35172C62FeBFD67a1856F20FaEbB00.png",
+        "decimals": "18"
+    },
+    {
+        "address": "0x4aae823a6a0b376De6A78e74eCC5b079d38cBCf7",
+        "ticker": "SolvBTC",
+        "name": "SolvBTC Token",
+        "img": "https://tokens.pancakeswap.finance/images/0x4aae823a6a0b376De6A78e74eCC5b079d38cBCf7.png",
+        "decimals": "18"
+    },
     {
         "address": "0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63",
         "ticker": "XVS",
         "name": "Venus",
         "img": "https://coin-images.coingecko.com/coins/images/12677/large/download.jpg?1696512482",
         "ids": "venus",
-        "derivedBNB": "0.01052793464447201029433646730643189",
-        "derivedUSD": "6.023747335699336401466907790492331",
         "decimals": "18",
         "totalLiquidity": "12184.426589524541235436"
     },
@@ -159,8 +193,6 @@
         "ids": "polkadot",
         "img": "https://coin-images.coingecko.com/coins/images/12171/large/polkadot.png?1696512008",
         "name": "Polkadot Token",
-        "derivedBNB": "0.01073035122021883632904692817548552",
-        "derivedUSD": "6.144033138893995447685469767921223",
         "decimals": "18",
         "totalLiquidity": "57171.239521043790201258"
     },
@@ -170,8 +202,6 @@
         "ids": "cardano",
         "img": "https://coin-images.coingecko.com/coins/images/975/large/cardano.png?1696502090",
         "name": "Cardano Token",
-        "derivedBNB": "0.0006924466731712504297498618897875709",
-        "derivedUSD": "0.3962282821458672404385751483655842",
         "decimals": "18",
         "totalLiquidity": "1059653.580998313075838057"
     },
@@ -181,19 +211,16 @@
         "ids": "dai",
         "img": "https://coin-images.coingecko.com/coins/images/9956/large/Badge_Dai.png?1696509996",
         "name": "Dai Token",
-        "derivedBNB": "0.001739815617346284059349453561498287",
-        "derivedUSD": "0.9954877070109914864394928440321814",
         "decimals": "18",
         "totalLiquidity": "168722.228554313810634097"
     },
+
     {
         "address": "0x87230146E138d3F296a9a77e497A2A83012e9Bc5",
         "ticker": "SQUID",
         "ids": "squid-game",
         "img": "https://coin-images.coingecko.com/coins/images/20506/large/squid.png?1696519912",
         "name": "Squid Game",
-        "derivedBNB": "0.00001843747634538962321174151113160727",
-        "derivedUSD": "0.01055216718344811698371768842331031",
         "decimals": "18",
         "totalLiquidity": "52328340.489625837970450429"
     },
@@ -203,8 +230,6 @@
         "ids": "bomber-coin",
         "img": "https://coin-images.coingecko.com/coins/images/18567/large/bcoin.png?1696518045",
         "name": "Bomber Coin",
-        "derivedBNB": "0.00002181836680342474486069102515865461",
-        "derivedUSD": "0.01249603095163870617089409889801299",
         "decimals": "18",
         "totalLiquidity": "8382055.178977081150970441"
     },
@@ -214,8 +239,6 @@
         "name": "AEVO",
         "ids": "aevo-exchange",
         "img": "https://coin-images.coingecko.com/coins/images/35893/large/aevo.png?1710138340",
-        "derivedBNB": "0",
-        "derivedUSD": "0",
         "decimals": "18",
         "totalLiquidity": "627021945609.041715147728784509"
     },
@@ -225,8 +248,6 @@
         "img": "https://coin-images.coingecko.com/coins/images/13905/large/sfp.png?1696513647",
         "name": "SafePal Token",
         "ids": "safepal",
-        "derivedBNB": "0.001432202590803292646475708704584809",
-        "derivedUSD": "0.8195566188850406452551992684803552",
         "decimals": "18",
         "totalLiquidity": "567302.151953639497572441"
     },
@@ -236,8 +257,6 @@
         "img": "https://coin-images.coingecko.com/coins/images/17461/large/token-200x200.png?1696517004",
         "ids": "plant-vs-undead-token",
         "name": "Plant vs Undead Token",
-        "derivedBNB": "0.000003125509238682040286957864578404472",
-        "derivedUSD": "0.001788978848900591382285514110810867",
         "decimals": "18",
         "totalLiquidity": "101625789.141638490983573568"
     },
@@ -247,8 +266,6 @@
         "ids": "bscpad",
         "img": "https://coin-images.coingecko.com/coins/images/14135/large/bscpad_logo.jpg?1696513855",
         "name": "BSCPAD.com",
-        "derivedBNB": "0.000127556641641220788831757364709689",
-        "derivedUSD": "0.07297059177268029527853014872329479",
         "decimals": "18",
         "totalLiquidity": "8296973.24891314686844431"
     }

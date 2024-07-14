@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Button, Grid, Switch, Tabs } from '@mantine/core'
 import classes from './page.module.scss'
-import PoolCard from './Card'
+import FarmCard from './Card'
 import { usePancakeSwapPools } from '@/hooks/usePancakeSwapPools'
 import _ from 'lodash'
 
@@ -144,7 +144,7 @@ const Page = () => {
                                 <Grid gutter='xl'>
                                     {livePoolList.map((pool, index) => (
                                         <Grid.Col key={index} span={4}>
-                                            <PoolCard pool={pool} />
+                                            <FarmCard pool={pool} />
                                         </Grid.Col>
                                     ))}
                                 </Grid>
@@ -153,7 +153,7 @@ const Page = () => {
                                 <Grid gutter='xl' grow>
                                     {finishedPoolList.map((pool, index) => (
                                         <Grid.Col key={index} span={4}>
-                                            <PoolCard pool={pool} />
+                                            <FarmCard pool={pool} />
                                         </Grid.Col>
                                     ))}
                                 </Grid>

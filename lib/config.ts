@@ -12,5 +12,11 @@ export const config = createConfig({
         storage: cookieStorage
     }),
     connectors,
-    transports: supportedChains.reduce((obj, chain) => ({ ...obj, [chain.id]: http() }), {})
+    transports: supportedChains.reduce(
+        (obj, chain) => ({
+            ...obj,
+            [chain.id]: http()
+        }),
+        {}
+    )
 })

@@ -2,13 +2,9 @@
     {
         "address": "0xae13d989dac2f0debff460ac112a837c89baa7cd",
         "ticker": "WBNB",
-        "ids": "wbnb",
         "img": "https://coin-images.coingecko.com/coins/images/12591/large/binance-coin-logo.png?1696512401",
         "name": "Wrapped BNB",
-        "derivedBNB": "1",
-        "derivedUSD": "572.3457196366796945665047941868706",
-        "decimals": "18",
-        "totalLiquidity": "840290.726378129831005093"
+        "decimals": "18"
     },
     {
         "address": "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
@@ -16,20 +12,21 @@
         "img": "https://coin-images.coingecko.com/coins/images/325/large/Tether.png?1696501661",
         "ticker": "USDT",
         "name": "Tether USD",
-        "derivedBNB": "0.001744607222827835188895639119106893",
-        "derivedUSD": "0.9985184764327465381705196660432797",
-        "decimals": "18",
-        "totalLiquidity": "118056123.814705397168179838"
+        "decimals": "18"
     },
     {
         "address": "0xFa60D973F7642B748046464e165A65B7323b0DEE",
         "img": "https://s3.coinmarketcap.com/static/img/portraits/622adc153bfcf86d42d1bc76.png",
         "ticker": "CAKE",
         "name": "PancakeSwap Token",
-        "derivedBNB": "0.003769114215590628363904198432247203",
-        "derivedUSD": "2.156882084780599539982282181149945",
-        "decimals": "18",
-        "totalLiquidity": "13600158.092125808451849138"
+        "decimals": "18"
+    },
+    {
+        "address": "0xd66c6B4F0be8CE5b39D52E0Fd1344c389929B378",
+        "img": "https://pancakeswap.finance/images/tokens/0x2170Ed0880ac9A755fd29B2688956BD959F933F8.png",
+        "ticker": "ETH",
+        "name": "Ethereum Token",
+        "decimals": "18"
     },
     {
         "ticker": "PEPE",

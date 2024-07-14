@@ -14,66 +14,57 @@ import { useEffect, useMemo, useState } from 'react'
 import style from './page.module.scss'
 import bep20Abi from '@/constants/bep20Abi.json'
 import { formatEther, parseEther } from 'viem'
-import { useAccount, useBalance, useWriteContract } from 'wagmi'
+import { useAccount, useBalance, BaseError } from 'wagmi'
+import { writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import masterchefv2Abi from '@/constants/masterchefv2Abi.json'
 import MyModal from '@/components/myModal/page'
 import MyButton from '@/components/myButton/page'
 import bnbTestToken from '@/constants/bnbTestToken.json'
+import tokenList from '@/constants/tokenList.json'
+import { config } from '@/lib/config'
 
-// type TObject = {
-//     name: string
-//     apr: string
-//     lockup: string
-//     image: string
-//     userStakedAmount: number // 用户已经 质押的LP 数量
-//     pendingCake: string // 用户目前 earn 的数量
-//     stakedToken: `0x${string}`
-//     rewardToken: `0x${string}`
-//     poolId: number
-//     totalStaked: string
-//     stakedTokenSymbol: string
-//     rewardTokenSymbol: string
-//     endsInDay: number
-//     endsInSeconds: string
-// }
-// const masterChefV2Address = '0xa5f8C5Dbd5F286960b9d90548680aE5ebFf07652'
+type TObject = {
+    name: string
+    apr: string
+    lockup: string
+    image: string
+    userStakedAmount: number // 用户已经 质押的LP 数量
+    pendingReward: string // 用户目前 earn 的数量
+    stakedToken: `0x${string}`
+    rewardToken: `0x${string}`
+    poolId: number
+    totalStaked: string
+    stakedTokenSymbol: string
+    rewardTokenSymbol: string
+    endsInDay: number
+    endsInSeconds: string
+}
 
-// testnet
-// const masterChefV2Address = '0xB4A466911556e39210a6bB2FaECBB59E4eB7E43d'
-
-export default function PoolCard({ pool }) {
+export default function PoolCard({ pool }: { pool: TObject }) {
     const { address, chainId } = useAccount()
 
     const masterChefV2Address =
         chainId === 56
             ? '0xa5f8C5Dbd5F286960b9d90548680aE5ebFf07652'
             : '0xB4A466911556e39210a6bB2FaECBB59E4eB7E43d'
-    const {
-        writeContract: writeForStake,
-        data: stakeData,
-        isSuccess: isSuccessStake,
-        isError: isErrorStake,
-        error: errorStake
-    } = useWriteContract()
 
     const [isShowConfirm, setisShowConfirm] = useState(false)
     // 控制弹窗内的按钮loading
     const [confirmLoading, setconfirmLoading] = useState(false)
     const [amount, setamount] = useState('')
     const [stakedTokenBalance, setstakedTokenBalance] = useState(0)
-    const [tokenOneBalance, settokenOneBalance] = useState(0)
-    const [tokenTwoBalance, settokenTwoBalance] = useState(0)
 
     //  读取用户address 在 stakedToken 的余额
     const { data: lptokenData, isSuccess: isSuccessLpTokenBalance } = useBalance({
         address,
         token: pool.stakedToken,
-        enabled: isShowConfirm // 当用户点击approve 打开弹窗后才去获取
+        // @ts-ignore
+        enabled: !!isShowConfirm // 当用户点击approve 打开弹窗后才去获取
     })
 
     const [isTxDetailOpen, setisTxDetailOpen] = useState(false)
     const [isTxDetailErrorOpen, setisTxDetailErrorOpen] = useState(false)
-    const [txDetailError, settxDetailError] = useState()
+    const [txDetailError, settxDetailError] = useState('')
     const [txHash, settxHash] = useState('')
 
     useEffect(() => {
@@ -86,8 +77,10 @@ export default function PoolCard({ pool }) {
         }
     }, [isSuccessLpTokenBalance, lptokenData])
 
-    const ChangeAmount = (e) => {
-        setamount(e.target.value)
+    const ChangeAmount = (e: any) => {
+        const target = e.target as HTMLInputElement
+        let value = target.value
+        setamount(value)
     }
 
     const handleTokenOneMax = () => {
@@ -98,63 +91,83 @@ export default function PoolCard({ pool }) {
         setisShowConfirm(true)
     }
 
-    const {
-        writeContract: writeForApprove,
-        isSuccess: isSuccessApprove,
-        isError: isErrorApprove
-    } = useWriteContract()
     // 用户进行staked操作 先approve
     const handleConfirm = async () => {
         setconfirmLoading(true)
-        writeForApprove({
-            address: pool.stakedToken,
-            functionName: 'approve',
-            args: [masterChefV2Address, parseEther(amount)],
-            abi: bep20Abi
-        })
+        let approveReceipt
+        try {
+            const res = await writeContract(config, {
+                address: pool.stakedToken,
+                functionName: 'approve',
+                args: [masterChefV2Address, parseEther(amount)],
+                abi: bep20Abi
+            })
+            approveReceipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
+        } catch (error) {
+            setconfirmLoading(false)
+            return
+        }
+
+        if (approveReceipt.status === 'success') handleStakedAfterApprove()
     }
 
-    useEffect(() => {
-        //approve 成功后 staked
-        if (isSuccessApprove) {
-            writeForStake({
+    const handleStakedAfterApprove = async () => {
+        let txReceipt
+        try {
+            const res = await writeContract(config, {
                 address: masterChefV2Address,
                 abi: masterchefv2Abi,
                 functionName: 'deposit',
                 args: [pool.poolId, parseEther(amount)]
             })
-        }
-        if (isErrorApprove) {
-            setconfirmLoading(false)
-        }
-    }, [isErrorApprove, isSuccessApprove, amount, pool.poolId, writeForStake])
+            txReceipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
 
-    // 提取用户已经赚取的收益
-    const handleHarvest = async () => {
-        writeForStake({
-            address: masterChefV2Address,
-            abi: masterchefv2Abi,
-            functionName: 'deposit',
-            args: [pool.poolId, parseEther('0')]
-        })
-    }
-
-    // 处理 staked 成功失败操作
-    useEffect(() => {
-        if (isSuccessStake) {
-            setconfirmLoading(false)
-            setisShowConfirm(false)
-            setisTxDetailOpen(true)
-            settxHash(stakeData)
-        }
-        if (isErrorStake) {
+            if (txReceipt.status === 'success') {
+                setconfirmLoading(false)
+                setisShowConfirm(false)
+                setisTxDetailOpen(true)
+                settxHash(res)
+            }
+        } catch (error) {
             setconfirmLoading(false)
             setisShowConfirm(false)
             setisTxDetailErrorOpen(true)
-            // todo
-            settxDetailError('')
+            settxDetailError((error as BaseError).shortMessage)
         }
-    }, [isSuccessStake, stakeData, isErrorStake, errorStake])
+    }
+
+    // 提取用户已经赚取的收益 harvest
+    const handleHarvest = async () => {
+        let txReceipt
+        try {
+            const res = await writeContract(config, {
+                address: masterChefV2Address,
+                abi: masterchefv2Abi,
+                functionName: 'deposit',
+                args: [pool.poolId, parseEther('0')]
+            })
+
+            txReceipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
+
+            if (txReceipt.status === 'success') {
+                setconfirmLoading(false)
+                setisShowConfirm(false)
+                setisTxDetailOpen(true)
+                settxHash(res)
+            }
+        } catch (error) {
+            setconfirmLoading(false)
+            setisShowConfirm(false)
+            setisTxDetailErrorOpen(true)
+            settxDetailError((error as BaseError).shortMessage)
+        }
+    }
 
     const isDisableConfirm = useMemo(() => {
         if (stakedTokenBalance === 0) return true
@@ -179,70 +192,76 @@ export default function PoolCard({ pool }) {
         setwithdrawAmount(String(stakedTokenBalance))
     }
 
-    const changeWithdrawAmount = (e) => {
-        setwithdrawAmount(e.target.value)
+    const changeWithdrawAmount = (e: any) => {
+        const target = e.target as HTMLInputElement
+        let value = target.value
+        setwithdrawAmount(value)
     }
-
-    const {
-        writeContract: writeForWithdraw,
-        data: withdrawData,
-        isSuccess: isSuccessWithdraw,
-        isError: isErrorWithdraw,
-        error: errorWithdraw
-    } = useWriteContract()
 
     // 用户点击 - 按钮 ，减少staked的数量
-    const withdrawFn = () => {
+    const withdrawFn = async () => {
         setwithdrawLoading(true)
-        writeForWithdraw({
-            address: masterChefV2Address,
-            abi: masterchefv2Abi,
-            functionName: 'withdraw',
-            args: [pool.poolId, parseEther(withdrawAmount)]
-        })
-    }
+        let txReceipt
+        try {
+            const res = await writeContract(config, {
+                address: masterChefV2Address,
+                abi: masterchefv2Abi,
+                functionName: 'withdraw',
+                args: [pool.poolId, parseEther(withdrawAmount)]
+            })
 
-    useEffect(() => {
-        if (isSuccessWithdraw) {
-            setisShowWithdraw(false)
-            setwithdrawLoading(false)
-            setisTxDetailOpen(true)
-            settxHash(withdrawData)
-        }
-
-        if (isErrorWithdraw) {
+            txReceipt = await waitForTransactionReceipt(config, {
+                hash: res
+            })
+            if (txReceipt.status === 'success') {
+                setisShowWithdraw(false)
+                setwithdrawLoading(false)
+                setisTxDetailOpen(true)
+                settxHash(res)
+            }
+        } catch (error) {
             setisShowWithdraw(false)
             setwithdrawLoading(false)
             setisTxDetailErrorOpen(true)
-            // todo
-            console.log(123, errorWithdraw)
-            settxDetailError('')
+            settxDetailError((error as BaseError).shortMessage)
         }
-    }, [isSuccessWithdraw, withdrawData, isErrorWithdraw, errorWithdraw])
+    }
 
     const [isDetail, setisDetail] = useState(false)
 
     const isEnableHarvest = useMemo(() => {
-        return Number(pool.pendingCake) > 0
-    }, [pool.pendingCake])
+        return Number(pool.pendingReward) > 0
+    }, [pool.pendingReward])
 
     const getPoolPairToken0Img = useMemo(() => {
         if (pool.stakedTokenSymbol) {
-            const item = bnbTestToken.find((e) => e.ticker === pool.stakedTokenSymbol.toUpperCase())
+            const item =
+                chainId === 56
+                    ? tokenList.find(
+                          (e) => e.ticker.toUpperCase() === pool.stakedTokenSymbol.toUpperCase()
+                      )
+                    : bnbTestToken.find(
+                          (e) => e.ticker.toUpperCase() === pool.stakedTokenSymbol.toUpperCase()
+                      )
             if (item) return item.img
         }
-    }, [pool.stakedTokenSymbol])
+    }, [pool.stakedTokenSymbol, chainId])
 
     const getPoolPairToken1Img = useMemo(() => {
         if (pool.rewardTokenSymbol) {
-            const item = bnbTestToken.find(
-                (e) => e.ticker.toUpperCase() === pool.rewardTokenSymbol.toUpperCase()
-            )
+            const item =
+                chainId === 56
+                    ? tokenList.find(
+                          (e) => e.ticker.toUpperCase() === pool.rewardTokenSymbol.toUpperCase()
+                      )
+                    : bnbTestToken.find(
+                          (e) => e.ticker.toUpperCase() === pool.rewardTokenSymbol.toUpperCase()
+                      )
             if (item) return item.img
         }
-    }, [pool.rewardTokenSymbol])
+    }, [pool.rewardTokenSymbol, chainId])
 
-    const toThousands = function (num) {
+    const toThousands = function (num: any) {
         var l
         if (num < 0) {
             l = 4
@@ -332,7 +351,7 @@ export default function PoolCard({ pool }) {
                         APR:
                     </Text>
                     <Text size='sm' style={{ color: '#ff5c00' }}>
-                        {Number(pool.apr).toFixed(1)}%
+                        {pool.apr}%
                     </Text>
                 </Group>
 
@@ -341,7 +360,7 @@ export default function PoolCard({ pool }) {
                         <span className='mr-2'>{pool.rewardTokenSymbol}</span>
                         <div className={style.custom_text}>Earned</div>
                     </div>
-                    <Text>{pool.pendingCake}</Text>
+                    <Text>{pool.pendingReward}</Text>
                 </div>
 
                 <div className='flex'>
@@ -350,7 +369,7 @@ export default function PoolCard({ pool }) {
                         color={isEnableHarvest ? '#F15223' : 'gray'}
                         size='xs'
                         style={{ width: '100%', borderColor: '', backgroundColor: '#1f1f1f' }}
-                        disabled={isEnableHarvest}
+                        disabled={!isEnableHarvest}
                         onClick={() => handleHarvest()}
                     >
                         Harvest
@@ -414,7 +433,7 @@ export default function PoolCard({ pool }) {
                 )}
 
                 <div
-                    className='flex text-[#f15223] justify-center'
+                    className='flex text-[#f15223] justify-center cursor-pointer'
                     onClick={() => setisDetail(!isDetail)}
                 >
                     <span>{isDetail ? 'Hide' : 'Details'}</span>
